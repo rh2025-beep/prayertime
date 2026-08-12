@@ -1,0 +1,25 @@
+{
+  "appId": "com.prayertimes.app",
+  "appName": "Prayer Times",
+  "webDir": "dist",
+  "server": {
+    "hostname": "localhost",
+    "iosScheme": "capacitor",
+    "androidScheme": "https",
+    "allowNavigation": ["*"]
+  },
+  "android": {
+    "backgroundColor": "#edf5f1"
+  },
+  "plugins": {
+    "StatusBar": {
+      "overlaysWebView": true,
+      "style": "LIGHT"
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon",
+      "iconColor": "#166534",
+      "sound": "makkah"
+    }
+  }
+}

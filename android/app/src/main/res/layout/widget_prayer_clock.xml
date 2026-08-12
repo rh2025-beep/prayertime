@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="14dp"
+    android:background="@drawable/widget_bg_emerald"
+    android:gravity="center">
+
+    <!-- Top Split Section: Current Time (Left) & Next Prayer (Right) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:baselineAligned="false">
+
+        <!-- Left Column: Current Time -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/widget_time_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="এখন সময়"
+                android:textColor="#dcfce7"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_time_val"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="৮:৩২ pm"
+                android:textColor="#ffffff"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:layout_marginTop="2dp"
+                android:layout_marginBottom="2dp" />
+
+            <TextView
+                android:id="@+id/widget_time_sub"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="স্থানীয় সময়"
+                android:textColor="#dcfce7"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Center Divider -->
+        <ImageView
+            android:layout_width="1dp"
+            android:layout_height="45dp"
+            android:background="#40ffffff"
+            android:layout_marginLeft="4dp"
+            android:layout_marginRight="4dp"
+            android:contentDescription="@null" />
+
+        <!-- Right Column: Next Prayer & Countdown -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/widget_next_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="পরবর্তী: ফজর"
+                android:textColor="#dcfce7"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_next_val"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="৪:০৮ am"
+                android:textColor="#ffffff"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:layout_marginTop="2dp"
+                android:layout_marginBottom="2dp" />
+
+            <TextView
+                android:id="@+id/widget_next_countdown"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="(৭ ঘণ্টা ৩৫ মিনিট বাকি)"
+                android:textColor="#86efac"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Middle Progress Bar Section -->
+    <ProgressBar
+        android:id="@+id/widget_progress_bar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="6dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="6dp"
+        android:max="100"
+        android:progress="35"
+        android:progressDrawable="@drawable/widget_progress_emerald" />
+
+    <!-- Bottom Start & End Prayer Time Labels -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/widget_start_label"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="ইশা ৮:০০ pm"
+            android:textColor="#ffffff"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:gravity="left" />
+
+        <TextView
+            android:id="@+id/widget_end_label"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="ফজর ৪:০৮ am"
+            android:textColor="#ffffff"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:gravity="right" />
+    </LinearLayout>
+
+</LinearLayout>

@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Prayer Times</string>
+    <string name="title_activity_main">Prayer Times</string>
+    <string name="package_name">com.prayertimes.app</string>
+    <string name="custom_url_scheme">com.prayertimes.app</string>
+    <string name="widget_name">সালাতের সময়সূচী উইজেট</string>
+    <string name="widget_description">পরবর্তী সালাতের সময় ও কাউন্টডাউন হোম স্ক্রিন উইজেট</string>
+    <string name="shortcut_qibla_short">কিবলা</string>
+    <string name="shortcut_qibla_long">কিবলা কম্পাস</string>
+    <string name="shortcut_forbidden_short">নিষিদ্ধ সময়</string>
+    <string name="shortcut_forbidden_long">সালাতের নিষিদ্ধ সময়</string>
+    <string name="shortcut_settings_short">সেটিংস</string>
+    <string name="shortcut_settings_long">অ্যাপ সেটিংস</string>
+</resources>

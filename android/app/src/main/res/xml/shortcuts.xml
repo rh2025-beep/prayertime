@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="qibla_compass"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_qibla_short"
+        android:shortcutLongLabel="@string/shortcut_qibla_long">
+        <intent
+            android:action="com.prayertimes.app.OPEN_QIBLA"
+            android:targetPackage="com.prayertimes.app"
+            android:targetClass="com.prayertimes.app.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="forbidden_times"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_forbidden_short"
+        android:shortcutLongLabel="@string/shortcut_forbidden_long">
+        <intent
+            android:action="com.prayertimes.app.OPEN_FORBIDDEN"
+            android:targetPackage="com.prayertimes.app"
+            android:targetClass="com.prayertimes.app.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="settings"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_settings_short"
+        android:shortcutLongLabel="@string/shortcut_settings_long">
+        <intent
+            android:action="com.prayertimes.app.OPEN_SETTINGS"
+            android:targetPackage="com.prayertimes.app"
+            android:targetClass="com.prayertimes.app.MainActivity" />
+    </shortcut>
+</shortcuts>

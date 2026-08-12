@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#edf6f2" />
+      <stop offset="100%" stop-color="#d6e8de" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="110" fill="url(#bgGrad)" />
+  
+  <g transform="translate(106, 60)" stroke="#1a1a1a" stroke-width="8" stroke-linejoin="round" stroke-linecap="round">
+    <!-- MINARETS -->
+    <!-- Left Minaret -->
+    <g transform="translate(20, 0)">
+      <!-- Roof cap -->
+      <path d="M20 50 L0 80 L40 80 Z" fill="#f1f5f9" />
+      <line x1="20" y1="35" x2="20" y2="50" stroke="#1a1a1a" stroke-width="8" />
+      <!-- Top gallery/balcony -->
+      <rect x="5" y="80" width="30" height="70" rx="4" fill="#e2e8f0" />
+      <!-- Windows -->
+      <!-- Lower balcony -->
+      <path d="M0 150 L5 190 L35 190 L40 150 Z" fill="#cbd5e1" />
+      <rect x="5" y="190" width="30" height="60" rx="4" fill="#e2e8f0" />
+    </g>
+    
+    <!-- Right Minaret -->
+    <g transform="translate(200, 0)">
+      <!-- Roof cap -->
+      <path d="M20 50 L0 80 L40 80 Z" fill="#f1f5f9" />
+      <line x1="20" y1="35" x2="20" y2="50" stroke="#1a1a1a" stroke-width="8" />
+      <!-- Top gallery/balcony -->
+      <rect x="5" y="80" width="30" height="70" rx="4" fill="#e2e8f0" />
+      <!-- Windows -->
+      <!-- Lower balcony -->
+      <path d="M0 150 L5 190 L35 190 L40 150 Z" fill="#cbd5e1" />
+      <rect x="5" y="190" width="30" height="60" rx="4" fill="#e2e8f0" />
+    </g>
+
+    <!-- KAABA CUBE -->
+    <!-- Top roof face -->
+    <path d="M150 180 L20 220 L150 240 L280 220 Z" fill="#2d3748" />
+    
+    <!-- Left face -->
+    <path d="M20 220 L150 240 L150 400 L20 380 Z" fill="#1a202c" />
+    <!-- Right face -->
+    <path d="M150 240 L280 220 L280 380 L150 400 Z" fill="#111827" />
+    
+    <!-- Gold band Left -->
+    <path d="M20 245 L150 265 L150 290 L20 270 Z" fill="#fbbf24" />
+    <!-- Gold band Right -->
+    <path d="M150 265 L280 245 L280 270 L150 290 Z" fill="#fbbf24" />
+    
+    <!-- White draped curtains folds (bottom) -->
+    <!-- Left drape -->
+    <path d="M20 295 Q50 310 80 350 Q110 310 150 295 L150 350 Q110 375 80 370 Q50 375 20 350 Z" fill="#f8fafc" />
+    <!-- Right drape -->
+    <path d="M150 295 Q190 310 220 350 Q250 310 280 295 L280 350 Q250 375 220 370 Q190 375 150 350 Z" fill="#f8fafc" />
+  </g>
+</svg>
