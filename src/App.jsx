@@ -1887,13 +1887,21 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                     style={{ cursor: Capacitor.isNativePlatform() ? 'default' : 'grab' }}
                   >
                     {/* Direction Alignment Indicator Badge */}
-                    <div className={`fixed-qibla-marker ${isAligned ? 'aligned' : ''}`} style={{ background: isAligned ? 'var(--primary-green)' : 'transparent', borderRadius: '20px', padding: '2px 8px' }}>
-                      <span style={{ fontSize: '0.72rem', fontWeight: '800', color: isAligned ? 'white' : 'var(--primary-green)' }}>
+                    <div className={`fixed-qibla-marker ${isAligned ? 'aligned' : ''}`} style={{
+                      background: isAligned ? 'linear-gradient(135deg, #166534, #15803d)' : 'var(--card-bg-glass)',
+                      border: isAligned ? '1.5px solid #22c55e' : '1px solid var(--border-color)',
+                      boxShadow: isAligned ? '0 0 16px rgba(34, 197, 94, 0.5)' : 'var(--shadow-sm)',
+                      borderRadius: '20px',
+                      padding: '4px 12px',
+                      top: '-14px',
+                      transition: 'all 0.3s ease'
+                    }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: '900', color: isAligned ? '#ffffff' : 'var(--primary-green)', letterSpacing: '0.2px' }}>
                         {isAligned ? (lang === 'bn' ? '✓ কিবলামুখী' : '✓ Qibla Aligned') : (lang === 'bn' ? 'কিবলার দিক' : 'Qibla Direction')}
                       </span>
                     </div>
 
-                    <svg viewBox="0 0 200 200" className="compass-svg" style={{ transform: 'rotate(' + (heading ? -heading : 0) + 'deg)' }}>
+                    <svg viewBox="-25 -25 250 250" className="compass-svg" style={{ transform: 'rotate(' + (heading ? -heading : 0) + 'deg)', overflow: 'visible' }}>
                       {/* Outer ring */}
                       <circle cx="100" cy="100" r="90" fill="none" stroke="var(--primary-green)" strokeWidth="2.5" />
                       {/* Dashed ticks */}
@@ -1915,14 +1923,14 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                       <text x="50" y="156" fontSize="9" fontWeight="600" textAnchor="middle" fill="var(--text-muted)" opacity="0.7">SW</text>
                       <text x="50" y="52" fontSize="9" fontWeight="600" textAnchor="middle" fill="var(--text-muted)" opacity="0.7">NW</text>
 
-                      {/* Needle pointing directly to Qibla (Kaaba attached at head) */}
+                      {/* Needle and Kaaba Icon sitting OUTSIDE the ring at qiblaAngle */}
                       <g transform={`rotate(${qiblaAngle}, 100, 100)`}>
-                        {/* Needle body */}
-                        <path d="M100,100 L96,100 L100,32 Z" fill="var(--primary-green)" opacity="0.95" />
-                        <path d="M100,100 L104,100 L100,32 Z" fill="var(--primary-green)" />
+                        {/* Needle body inside dial */}
+                        <path d="M100,100 L96,100 L100,28 Z" fill="var(--primary-green)" opacity="0.95" />
+                        <path d="M100,100 L104,100 L100,28 Z" fill="var(--primary-green)" />
                         
-                        {/* Kaaba 3D Icon attached at tip of Qibla Needle */}
-                        <g transform="translate(86, 6) scale(0.7)">
+                        {/* Kaaba 3D Icon floating OUTSIDE the circle ring (radius ~115px) */}
+                        <g transform="translate(85, -24) scale(0.85)">
                           <KaabaIcon3D />
                         </g>
                       </g>
