@@ -842,17 +842,13 @@ function App() {
   useEffect(() => {
     if (!isQiblaOpen) return;
 
-    if (!window.DeviceOrientationEvent && !Capacitor.isNativePlatform()) {
-      setCompassError('unsupported');
-      return;
-    }
-
     if (window.isSecureContext === false && !Capacitor.isNativePlatform()) {
       setCompassError('insecure');
-      return;
+    } else if (!window.DeviceOrientationEvent && !Capacitor.isNativePlatform()) {
+      setCompassError('unsupported');
+    } else {
+      setCompassError('');
     }
-
-    setCompassError('');
 
     const unsubscribe = subscribeCompass(
       {
@@ -1807,19 +1803,21 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                 </div>
               )}
 
-              {compassError ? (
-                <div className="compass-error-banner">
+              {compassError && (
+                <div className="compass-error-banner" style={{ marginBottom: '1rem' }}>
                   <Info size={24} style={{ color: 'var(--text-main)', flexShrink: 0 }} />
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <span style={{ fontWeight: '800', fontSize: '0.95rem' }}>
-                      {lang === 'bn' ? "সেন্সর ত্রুটি" : "Sensor Issue"}
+                      {lang === 'bn' ? "ওয়েব কম্পাস মোড" : "Web Compass Mode"}
                     </span>
                     <span style={{ fontSize: '0.85rem', opacity: 0.95, lineHeight: 1.4 }}>
                       {compassError === 'insecure' ? str.compassInsecure : str.compassUnsupported}
                     </span>
                   </div>
                 </div>
-              ) : hasCompassPermission === false ? (
+              )}
+
+              {hasCompassPermission === false ? (
                 <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
                   <p style={{ marginBottom: '1.25rem', color: 'var(--text-muted)' }}>{str.permissionRequired}</p>
                   <button onClick={requestCompassPermission} style={{ padding: '0.75rem 1.5rem', borderRadius: '10px', background: 'var(--active-gradient)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: '700' }}>
