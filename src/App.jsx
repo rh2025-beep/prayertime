@@ -457,7 +457,7 @@ function App() {
   }, []);
 
   const handleInstallApp = () => {
-    const targetUrl = 'https://github.com/rh2025-beep/prayertime/releases';
+    const targetUrl = 'https://github.com/drrezwanul-png/Prayertime/releases/download/v1/prayertime.apk';
     window.location.href = targetUrl;
     setShowInstallBanner(false);
   };
@@ -479,43 +479,6 @@ function App() {
   const [cardinal, setCardinal] = useState('N');
   const [isFlat, setIsFlat] = useState(true);
   const [showCalibrationHelp, setShowCalibrationHelp] = useState(false);
-
-  const [isDraggingCompass, setIsDraggingCompass] = useState(false);
-  const [dragStartAngle, setDragStartAngle] = useState(0);
-  const [dragStartHeading, setDragStartHeading] = useState(0);
-
-  const handleCompassPointerDown = (e) => {
-    if (Capacitor.isNativePlatform()) return;
-    const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
-    const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
-    const rect = e.currentTarget.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    const angle = Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
-    setIsDraggingCompass(true);
-    setDragStartAngle(angle);
-    setDragStartHeading(heading || 0);
-  };
-
-  const handleCompassPointerMove = (e) => {
-    if (!isDraggingCompass || Capacitor.isNativePlatform()) return;
-    const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
-    const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
-    const rect = e.currentTarget.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    const angle = Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
-    const delta = angle - dragStartAngle;
-    const newHeading = (dragStartHeading - delta + 360) % 360;
-    setHeading(newHeading);
-    const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
-    const idx = Math.round(newHeading / 45) % 8;
-    setCardinal(directions[idx]);
-  };
-
-  const handleCompassPointerUp = () => {
-    setIsDraggingCompass(false);
-  };
 
   useEffect(() => {
     if (!isQiblaOpen) {
@@ -875,13 +838,22 @@ function App() {
     }
   }, [nextPrayer, prevMilestone, timings, timeLeft, progressPercent, lang, colorTheme, widgetStyle]);
 
-  // Compass Sensor Logic — subscribeCompass handles both native (Android) and web (mobile browser) internally
+  // Compass Sensor Logic via Native Plugin / Web Fallback
   useEffect(() => {
     if (!isQiblaOpen) return;
 
-    // subscribeCompass() auto-detects:
-    //   Native → uses Capacitor Compass plugin (SensorManager)
-    //   Web    → uses deviceorientationabsolute + deviceorientation with tilt compensation
+    if (!window.DeviceOrientationEvent && !Capacitor.isNativePlatform()) {
+      setCompassError('unsupported');
+      return;
+    }
+
+    if (window.isSecureContext === false && !Capacitor.isNativePlatform()) {
+      setCompassError('insecure');
+      return;
+    }
+
+    setCompassError('');
+
     const unsubscribe = subscribeCompass(
       {
         lat: config.lat,
@@ -889,19 +861,18 @@ function App() {
         useTrueNorth
       },
       (data) => {
-        if (!isDraggingCompass) {
-          setHeading(data.heading);
-        }
+        setHeading(data.heading);
         setSensorAccuracy(data.accuracy || 'medium');
         setDeclination(data.declination || 0);
         setCardinal(data.cardinal || 'N');
         setIsFlat(data.isFlat !== undefined ? data.isFlat : true);
       }
     );
+
     return () => {
       if (unsubscribe) unsubscribe();
     };
-  }, [isQiblaOpen, useTrueNorth, config.lat, config.lng, isDraggingCompass]);
+  }, [isQiblaOpen, useTrueNorth, config.lat, config.lng]);
 
   // Auto-set compass permission for Android/Desktop (no prompt needed), prompt on iOS
   useEffect(() => {
@@ -1058,9 +1029,15 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
             <div className="title-divider" style={{ width: '100px', height: '10px' }}></div>
           </div>
           <div className="header-actions" style={{ display: 'flex', gap: '4px' }}>
-            <button className="action-btn" onClick={() => { if (navigator.vibrate) navigator.vibrate(10); setIsQiblaOpen(true); }} title={str.qibla} aria-label={str.qibla}>
-              <Compass size={24} style={{ color: 'var(--primary-green)' }} />
-            </button>
+            {Capacitor.isNativePlatform() ? (
+              <button className="action-btn" onClick={() => { if (navigator.vibrate) navigator.vibrate(10); setIsQiblaOpen(true); }} title={str.qibla} aria-label={str.qibla}>
+                <Compass size={24} />
+              </button>
+            ) : (
+              <button className="action-btn" onClick={() => { if (navigator.vibrate) navigator.vibrate(10); handleInstallApp(); }} title={lang === 'bn' ? 'অ্যাপ ডাউনলোড করুন' : 'Download App'} aria-label="Download App">
+                <Download size={24} style={{ color: 'var(--primary-green)' }} />
+              </button>
+            )}
           </div>
         </div>
 
@@ -1596,47 +1573,57 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                 </div>
 
                 {/* Per Prayer Toggles */}
-                {/* Per Prayer Toggles with Bell / BellOff Icons */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '6px' }}>
-                  {[
-                    { key: 'fajrNotif', labelBn: 'ফজর', labelEn: 'Fajr' },
-                    { key: 'dhuhrNotif', labelBn: 'যোহর', labelEn: 'Dhuhr' },
-                    { key: 'asrNotif', labelBn: 'আসর', labelEn: 'Asr' },
-                    { key: 'maghribNotif', labelBn: 'মাগরিব', labelEn: 'Maghrib' },
-                    { key: 'ishaNotif', labelBn: 'ইশা', labelEn: 'Isha' }
-                  ].map(p => {
-                    const isEnabled = notifConfig[p.key];
-                    return (
-                      <button
-                        key={p.key}
-                        onClick={() => setNotifConfig(prev => ({ ...prev, [p.key]: !prev[p.key] }))}
-                        className={`notif-toggle-btn ${isEnabled ? 'active' : 'disabled'}`}
-                        style={{
-                          padding: '8px 4px',
-                          borderRadius: '10px',
-                          border: isEnabled ? '1.5px solid var(--primary-green)' : '1px solid var(--border-color)',
-                          background: isEnabled ? 'var(--list-active-bg)' : 'var(--card-bg)',
-                          color: isEnabled ? 'var(--primary-green)' : 'var(--text-muted)',
-                          fontSize: '0.75rem',
-                          fontWeight: '800',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: '4px',
-                          cursor: 'pointer',
-                          boxShadow: isEnabled ? '0 2px 8px rgba(22, 101, 52, 0.15)' : 'none',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        {isEnabled ? (
-                          <Bell size={16} style={{ color: 'var(--primary-green)' }} />
-                        ) : (
-                          <BellOff size={16} style={{ color: 'var(--text-muted)', opacity: 0.6 }} />
-                        )}
-                        <span>{lang === 'bn' ? p.labelBn : p.labelEn}</span>
-                      </button>
-                    );
-                  })}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '600' }}>
+                    {lang === 'bn' ? 'ওয়াক্ত অনুযায়ী নোটিফিকেশন অ্যালার্ট:' : 'Prayer Notification Alerts:'}
+                  </span>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '6px' }}>
+                    {[
+                      { key: 'fajrNotif', labelBn: 'ফজর', labelEn: 'Fajr' },
+                      { key: 'dhuhrNotif', labelBn: 'যোহর', labelEn: 'Dhuhr' },
+                      { key: 'asrNotif', labelBn: 'আসর', labelEn: 'Asr' },
+                      { key: 'maghribNotif', labelBn: 'মাগরিব', labelEn: 'Maghrib' },
+                      { key: 'ishaNotif', labelBn: 'ইশা', labelEn: 'Isha' }
+                    ].map(p => {
+                      const isEnabled = Boolean(notifConfig[p.key]);
+                      return (
+                        <button
+                          key={p.key}
+                          onClick={() => setNotifConfig(prev => ({ ...prev, [p.key]: !prev[p.key] }))}
+                          style={{
+                            padding: '8px 4px',
+                            borderRadius: '12px',
+                            border: isEnabled ? '1.5px solid var(--primary-green)' : '1px solid var(--border-color)',
+                            background: isEnabled ? 'var(--list-active-bg)' : 'var(--bg-main)',
+                            color: isEnabled ? 'var(--primary-green)' : 'var(--text-muted)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '0.72rem',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            boxShadow: isEnabled ? '0 2px 8px rgba(22, 101, 52, 0.15)' : 'none'
+                          }}
+                        >
+                          {isEnabled ? <Bell size={15} style={{ color: 'var(--primary-green)' }} /> : <BellOff size={15} style={{ opacity: 0.5 }} />}
+                          <span>{lang === 'bn' ? p.labelBn : p.labelEn}</span>
+                          <span style={{
+                            fontSize: '0.62rem',
+                            fontWeight: '800',
+                            padding: '1px 6px',
+                            borderRadius: '6px',
+                            background: isEnabled ? 'var(--primary-green)' : 'rgba(148, 163, 184, 0.2)',
+                            color: isEnabled ? 'white' : 'var(--text-muted)',
+                            marginTop: '2px'
+                          }}>
+                            {isEnabled ? (lang === 'bn' ? 'চালু' : 'ON') : (lang === 'bn' ? 'বন্ধ' : 'OFF')}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
@@ -1679,14 +1666,6 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                 <div style={{ marginTop: '4px' }}>
                   Visit our facebook page: <a href="#" onClick={(e) => { e.preventDefault(); window.open("https://www.facebook.com/profile.php?id=61592160592518", "_system"); }} style={{ color: 'var(--primary-green)', textDecoration: 'none', fontWeight: '600' }}>CodeToday</a>
                 </div>
-                {!Capacitor.isNativePlatform() && (
-                  <div style={{ marginTop: '0.85rem' }}>
-                    <button onClick={handleInstallApp} style={{ padding: '8px 16px', borderRadius: '10px', background: 'var(--active-gradient)', color: 'white', border: 'none', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', boxShadow: '0 4px 12px rgba(22, 101, 52, 0.2)' }}>
-                      <Download size={16} />
-                      {lang === 'bn' ? 'অ্যান্ড্রয়েড অ্যাপ (APK) ডাউনলোড' : 'Download Android App (APK)'}
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -1836,21 +1815,19 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                 </div>
               )}
 
-              {compassError && (
-                <div className="compass-error-banner" style={{ marginBottom: '1rem' }}>
+              {compassError ? (
+                <div className="compass-error-banner">
                   <Info size={24} style={{ color: 'var(--text-main)', flexShrink: 0 }} />
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <span style={{ fontWeight: '800', fontSize: '0.95rem' }}>
-                      {lang === 'bn' ? "ওয়েব কম্পাস মোড" : "Web Compass Mode"}
+                      {lang === 'bn' ? "সেন্সর ত্রুটি" : "Sensor Issue"}
                     </span>
                     <span style={{ fontSize: '0.85rem', opacity: 0.95, lineHeight: 1.4 }}>
                       {compassError === 'insecure' ? str.compassInsecure : str.compassUnsupported}
                     </span>
                   </div>
                 </div>
-              )}
-
-              {hasCompassPermission === false ? (
+              ) : hasCompassPermission === false ? (
                 <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
                   <p style={{ marginBottom: '1.25rem', color: 'var(--text-muted)' }}>{str.permissionRequired}</p>
                   <button onClick={requestCompassPermission} style={{ padding: '0.75rem 1.5rem', borderRadius: '10px', background: 'var(--active-gradient)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: '700' }}>
@@ -1860,33 +1837,13 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
               ) : (
                 <>
                   {/* Compass Dial Area */}
-                  <div 
-                    className={`compass-dial-outer ${isAligned ? 'aligned' : ''}`}
-                    onMouseDown={handleCompassPointerDown}
-                    onMouseMove={handleCompassPointerMove}
-                    onMouseUp={handleCompassPointerUp}
-                    onMouseLeave={handleCompassPointerUp}
-                    onTouchStart={handleCompassPointerDown}
-                    onTouchMove={handleCompassPointerMove}
-                    onTouchEnd={handleCompassPointerUp}
-                    style={{ cursor: Capacitor.isNativePlatform() ? 'default' : 'grab' }}
-                  >
-                    {/* Direction Alignment Indicator Badge */}
-                    <div className={`fixed-qibla-marker ${isAligned ? 'aligned' : ''}`} style={{
-                      background: isAligned ? 'linear-gradient(135deg, #166534, #15803d)' : 'var(--card-bg-glass)',
-                      border: isAligned ? '1.5px solid #22c55e' : '1px solid var(--border-color)',
-                      boxShadow: isAligned ? '0 0 16px rgba(34, 197, 94, 0.5)' : 'var(--shadow-sm)',
-                      borderRadius: '20px',
-                      padding: '4px 12px',
-                      top: '-14px',
-                      transition: 'all 0.3s ease'
-                    }}>
-                      <span style={{ fontSize: '0.85rem', fontWeight: '900', color: isAligned ? '#ffffff' : 'var(--primary-green)', letterSpacing: '0.2px' }}>
-                        {isAligned ? (lang === 'bn' ? '✓ কিবলামুখী' : '✓ Qibla Aligned') : (lang === 'bn' ? 'কিবলার দিক' : 'Qibla Direction')}
-                      </span>
+                  <div className={`compass-dial-outer ${isAligned ? 'aligned' : ''}`}>
+                    {/* Fixed Qibla Icon at top midpoint */}
+                    <div className={`fixed-qibla-marker ${isAligned ? 'aligned' : ''}`}>
+                      <KaabaIcon3D />
                     </div>
 
-                    <svg viewBox="-25 -25 250 250" className="compass-svg" style={{ transform: 'rotate(' + (heading ? -heading : 0) + 'deg)', overflow: 'visible' }}>
+                    <svg viewBox="0 0 200 200" className="compass-svg" style={{ transform: 'rotate(' + (heading ? -heading : 0) + 'deg)' }}>
                       {/* Outer ring */}
                       <circle cx="100" cy="100" r="90" fill="none" stroke="var(--primary-green)" strokeWidth="2.5" />
                       {/* Dashed ticks */}
@@ -1908,16 +1865,13 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                       <text x="50" y="156" fontSize="9" fontWeight="600" textAnchor="middle" fill="var(--text-muted)" opacity="0.7">SW</text>
                       <text x="50" y="52" fontSize="9" fontWeight="600" textAnchor="middle" fill="var(--text-muted)" opacity="0.7">NW</text>
 
-                      {/* Needle and Kaaba Icon sitting OUTSIDE the ring at qiblaAngle */}
+                      {/* Needle pointing to Qibla */}
                       <g transform={`rotate(${qiblaAngle}, 100, 100)`}>
-                        {/* Needle body inside dial */}
+                        {/* Needle body */}
                         <path d="M100,100 L96,100 L100,28 Z" fill="var(--primary-green)" opacity="0.95" />
                         <path d="M100,100 L104,100 L100,28 Z" fill="var(--primary-green)" />
-                        
-                        {/* Kaaba 3D Icon floating OUTSIDE the circle ring (radius ~115px) */}
-                        <g transform="translate(85, -24) scale(0.85)">
-                          <KaabaIcon3D />
-                        </g>
+                        {/* Needle arrow head */}
+                        <polygon points="100,20 93,36 100,32 107,36" fill="var(--primary-green)" />
                       </g>
 
                       {/* Center Pivot */}

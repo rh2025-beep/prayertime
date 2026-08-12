@@ -106,21 +106,6 @@ export const subscribeCompass = (options, onUpdate) => {
   function startWebFallback() {
     const webDeclination = calculateWebDeclination(lat, lng);
 
-    // Immediate initial update for web environments
-    onUpdate({
-      heading: 0,
-      magneticHeading: 0,
-      trueHeading: webDeclination,
-      declination: webDeclination,
-      useTrueNorth,
-      accuracy: 'medium',
-      pitch: 0,
-      roll: 0,
-      isFlat: true,
-      cardinal: getCardinalDirection(0),
-      isNative: false
-    });
-
     webListener = (e) => {
       let rawHeading = null;
       if (e.webkitCompassHeading !== undefined && e.webkitCompassHeading !== null) {
