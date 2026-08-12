@@ -457,7 +457,7 @@ function App() {
   }, []);
 
   const handleInstallApp = () => {
-    const targetUrl = 'https://github.com/drrezwanul-png/Prayertime/releases/download/v1/prayertime.apk';
+    const targetUrl = 'https://github.com/rh2025-beep/prayertime/releases';
     window.location.href = targetUrl;
     setShowInstallBanner(false);
   };
