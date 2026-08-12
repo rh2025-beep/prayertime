@@ -480,6 +480,43 @@ function App() {
   const [isFlat, setIsFlat] = useState(true);
   const [showCalibrationHelp, setShowCalibrationHelp] = useState(false);
 
+  const [isDraggingCompass, setIsDraggingCompass] = useState(false);
+  const [dragStartAngle, setDragStartAngle] = useState(0);
+  const [dragStartHeading, setDragStartHeading] = useState(0);
+
+  const handleCompassPointerDown = (e) => {
+    if (Capacitor.isNativePlatform()) return;
+    const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+    const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const angle = Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
+    setIsDraggingCompass(true);
+    setDragStartAngle(angle);
+    setDragStartHeading(heading || 0);
+  };
+
+  const handleCompassPointerMove = (e) => {
+    if (!isDraggingCompass || Capacitor.isNativePlatform()) return;
+    const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+    const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const angle = Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
+    const delta = angle - dragStartAngle;
+    const newHeading = (dragStartHeading - delta + 360) % 360;
+    setHeading(newHeading);
+    const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+    const idx = Math.round(newHeading / 45) % 8;
+    setCardinal(directions[idx]);
+  };
+
+  const handleCompassPointerUp = () => {
+    setIsDraggingCompass(false);
+  };
+
   useEffect(() => {
     if (!isQiblaOpen) {
       setIsAligned(false);
@@ -1838,7 +1875,17 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
               ) : (
                 <>
                   {/* Compass Dial Area */}
-                  <div className={`compass-dial-outer ${isAligned ? 'aligned' : ''}`}>
+                  <div 
+                    className={`compass-dial-outer ${isAligned ? 'aligned' : ''}`}
+                    onMouseDown={handleCompassPointerDown}
+                    onMouseMove={handleCompassPointerMove}
+                    onMouseUp={handleCompassPointerUp}
+                    onMouseLeave={handleCompassPointerUp}
+                    onTouchStart={handleCompassPointerDown}
+                    onTouchMove={handleCompassPointerMove}
+                    onTouchEnd={handleCompassPointerUp}
+                    style={{ cursor: Capacitor.isNativePlatform() ? 'default' : 'grab' }}
+                  >
                     {/* Fixed Qibla Icon at top midpoint */}
                     <div className={`fixed-qibla-marker ${isAligned ? 'aligned' : ''}`}>
                       <KaabaIcon3D />
