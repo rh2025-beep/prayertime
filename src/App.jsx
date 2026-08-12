@@ -1886,9 +1886,11 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                     onTouchEnd={handleCompassPointerUp}
                     style={{ cursor: Capacitor.isNativePlatform() ? 'default' : 'grab' }}
                   >
-                    {/* Fixed Qibla Icon at top midpoint */}
-                    <div className={`fixed-qibla-marker ${isAligned ? 'aligned' : ''}`}>
-                      <KaabaIcon3D />
+                    {/* Direction Alignment Indicator Badge */}
+                    <div className={`fixed-qibla-marker ${isAligned ? 'aligned' : ''}`} style={{ background: isAligned ? 'var(--primary-green)' : 'transparent', borderRadius: '20px', padding: '2px 8px' }}>
+                      <span style={{ fontSize: '0.72rem', fontWeight: '800', color: isAligned ? 'white' : 'var(--primary-green)' }}>
+                        {isAligned ? (lang === 'bn' ? '✓ কিবলামুখী' : '✓ Qibla Aligned') : (lang === 'bn' ? 'কিবলার দিক' : 'Qibla Direction')}
+                      </span>
                     </div>
 
                     <svg viewBox="0 0 200 200" className="compass-svg" style={{ transform: 'rotate(' + (heading ? -heading : 0) + 'deg)' }}>
@@ -1913,13 +1915,16 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                       <text x="50" y="156" fontSize="9" fontWeight="600" textAnchor="middle" fill="var(--text-muted)" opacity="0.7">SW</text>
                       <text x="50" y="52" fontSize="9" fontWeight="600" textAnchor="middle" fill="var(--text-muted)" opacity="0.7">NW</text>
 
-                      {/* Needle pointing to Qibla */}
+                      {/* Needle pointing directly to Qibla (Kaaba attached at head) */}
                       <g transform={`rotate(${qiblaAngle}, 100, 100)`}>
                         {/* Needle body */}
-                        <path d="M100,100 L96,100 L100,28 Z" fill="var(--primary-green)" opacity="0.95" />
-                        <path d="M100,100 L104,100 L100,28 Z" fill="var(--primary-green)" />
-                        {/* Needle arrow head */}
-                        <polygon points="100,20 93,36 100,32 107,36" fill="var(--primary-green)" />
+                        <path d="M100,100 L96,100 L100,32 Z" fill="var(--primary-green)" opacity="0.95" />
+                        <path d="M100,100 L104,100 L100,32 Z" fill="var(--primary-green)" />
+                        
+                        {/* Kaaba 3D Icon attached at tip of Qibla Needle */}
+                        <g transform="translate(86, 6) scale(0.7)">
+                          <KaabaIcon3D />
+                        </g>
                       </g>
 
                       {/* Center Pivot */}
