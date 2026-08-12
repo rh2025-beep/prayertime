@@ -875,48 +875,33 @@ function App() {
     }
   }, [nextPrayer, prevMilestone, timings, timeLeft, progressPercent, lang, colorTheme, widgetStyle]);
 
-  // Compass Sensor Logic via Native Plugin (Android) / Direct Orientation (Web - Ramadan-App-main)
+  // Compass Sensor Logic — subscribeCompass handles both native (Android) and web (mobile browser) internally
   useEffect(() => {
     if (!isQiblaOpen) return;
 
-    if (Capacitor.isNativePlatform()) {
-      // Keep Android Native Plugin logic 100% intact
-      const unsubscribe = subscribeCompass(
-        {
-          lat: config.lat,
-          lng: config.lng,
-          useTrueNorth
-        },
-        (data) => {
+    // subscribeCompass() auto-detects:
+    //   Native → uses Capacitor Compass plugin (SensorManager)
+    //   Web    → uses deviceorientationabsolute + deviceorientation with tilt compensation
+    const unsubscribe = subscribeCompass(
+      {
+        lat: config.lat,
+        lng: config.lng,
+        useTrueNorth
+      },
+      (data) => {
+        if (!isDraggingCompass) {
           setHeading(data.heading);
-          setSensorAccuracy(data.accuracy || 'medium');
-          setDeclination(data.declination || 0);
-          setCardinal(data.cardinal || 'N');
-          setIsFlat(data.isFlat !== undefined ? data.isFlat : true);
         }
-      );
-      return () => {
-        if (unsubscribe) unsubscribe();
-      };
-    } else {
-      // Direct Web Orientation handling from Ramadan-App-main
-      const handleOrientation = (e) => {
-        let h = 0;
-        if (e.webkitCompassHeading !== undefined && e.webkitCompassHeading !== null) {
-          h = e.webkitCompassHeading;
-        } else if (e.alpha !== null && e.alpha !== undefined) {
-          h = (360 - e.alpha) % 360;
-        }
-        setHeading(h);
-        const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
-        const idx = Math.round(h / 45) % 8;
-        setCardinal(directions[idx]);
-      };
-
-      window.addEventListener('deviceorientation', handleOrientation, true);
-      return () => window.removeEventListener('deviceorientation', handleOrientation);
-    }
-  }, [isQiblaOpen, useTrueNorth, config.lat, config.lng]);
+        setSensorAccuracy(data.accuracy || 'medium');
+        setDeclination(data.declination || 0);
+        setCardinal(data.cardinal || 'N');
+        setIsFlat(data.isFlat !== undefined ? data.isFlat : true);
+      }
+    );
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [isQiblaOpen, useTrueNorth, config.lat, config.lng, isDraggingCompass]);
 
   // Auto-set compass permission for Android/Desktop (no prompt needed), prompt on iOS
   useEffect(() => {
