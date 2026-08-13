@@ -1,0 +1,3 @@
+## 2025-02-13 - [useEffect Render Multiplier with Expensive Calculations]
+**Learning:** In React, setting state variables inside a `useEffect` that triggers based on a frequent dependency (like a 1-second interval timer `currentTime`) can cause hidden render multipliers. If expensive calculations like `toLocaleString` (for timezone) or complex derived states (like `getForbiddenTimes`) are placed in the render body or the effect itself, they will run 2-3x more often than necessary per tick.
+**Action:** Always memoize derived state that performs expensive transformations (`useMemo`), especially when multiple cascaded renders occur from timers or intervals.

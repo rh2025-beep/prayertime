@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Settings, Calendar, Clock, MapPin, Sun, Moon, Sunrise, Sunset, CloudSun, Locate, Search, Compass, ChevronDown, ArrowLeft, Info, Maximize, AlertTriangle, RefreshCw, Compass as CompassIcon, Download, Bell, BellOff } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
@@ -650,17 +650,26 @@ function App() {
     return () => clearInterval(timer);
   }, []);
 
+  // ⚡ Bolt: Memoize expensive tz calculation so it only runs once per second (when currentTime changes)
+  // instead of multiple times per second due to redundant renders triggered by the effects below.
+  const tzTime = useMemo(() => {
+    if (metaInfo && metaInfo.timezone) {
+      try {
+        return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+      } catch {
+        return currentTime;
+      }
+    }
+    return currentTime;
+  }, [currentTime, metaInfo]);
+
+  // ⚡ Bolt: Memoize forbiddenTimes calculation. It only depends on 'timings' which changes rarely.
+  // Previously called multiple times per second in render and inside useEffect.
+  const forbiddenTimesInfo = useMemo(() => timings ? getForbiddenTimes(timings) : null, [timings]);
+
   useEffect(() => {
     if (!timings) return;
     
-    const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
-       try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
-       } catch {
-         return currentTime;
-       }
-     })() : currentTime;
-
     const nowMin = tzTime.getHours() * 60 + tzTime.getMinutes();
     const nowSec = tzTime.getSeconds();
     const nowTotalSec = nowMin * 60 + nowSec;
@@ -800,7 +809,7 @@ function App() {
     const calcProgress = (elapsedSec / totalDurationSec) * 100;
     setProgressPercent(Math.min(100, Math.max(0, calcProgress)));
 
-  }, [currentTime, timings, prayersList, metaInfo, lang]);
+  }, [currentTime, tzTime, timings, prayersList, metaInfo, lang]);
 
   // Sync Android Home Screen Widget payload & notify native widget manager immediately
   useEffect(() => {
@@ -996,19 +1005,10 @@ function App() {
     return `${formatNumber(activeTime.getDate(), lang)} ${getMonthName(activeTime.getMonth(), lang)} ${formatNumber(activeTime.getFullYear(), lang)}`;
   };
 
-const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
-       try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
-       } catch {
-         return currentTime;
-       }
-     })() : currentTime;
-
   const currentHour = tzTime.getHours();
   const currentMin = tzTime.getMinutes();
   const currentMinStr = currentMin < 10 ? `0${currentMin}` : `${currentMin}`;
 
-  const forbiddenTimesInfo = timings ? getForbiddenTimes(timings) : null;
   const nowMin = currentHour * 60 + currentMin;
   const activeForbiddenKey = checkCurrentForbidden(nowMin, forbiddenTimesInfo);
   const isCurrentForbidden = Boolean(activeForbiddenKey);
