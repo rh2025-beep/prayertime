@@ -1181,6 +1181,7 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                 className="glass-trigger-btn"
                 onClick={() => setIsScreensaverActive(true)}
                 title={lang === 'bn' ? 'স্ক্রিনসেভার চালু করুন' : 'Start Screensaver'}
+                aria-label={lang === 'bn' ? 'স্ক্রিনসেভার চালু করুন' : 'Start Screensaver'}
                 style={{ margin: 0, width: '36px', height: '36px', flexShrink: 0, position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}
               >
                 <Maximize size={18} />
@@ -1678,7 +1679,7 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
               <div className="sheet-drag-handle" />
               <div className="modal-header" style={{marginBottom: '1rem'}}>
                 <span className="modal-title">{str.searchLoc}</span>
-                <button className="close-btn" onClick={closeSearch}>&times;</button>
+                <button className="close-btn" onClick={closeSearch} aria-label={str.cancel}>&times;</button>
               </div>
               
               <div style={{display:'flex', gap:'0.5rem', marginBottom:'1rem'}}>
@@ -1687,30 +1688,34 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={str.searchCity}
+                  aria-label={str.searchCity}
                   style={{flex:1, padding:'0.75rem', borderRadius:'10px', border:'1px solid var(--border-color)', background:'var(--bg-main)', color:'var(--text-main)', fontSize:'1rem'}}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch(searchQuery)}
+                  onKeyDown={(e) => e.key === 'Enter' && !isSearching && handleSearch(searchQuery)}
+                  disabled={isSearching}
                 />
                 <button 
                   onClick={() => handleSearch(searchQuery)}
-                  style={{padding:'0.75rem 1rem', borderRadius:'10px', background:'var(--active-gradient)', color:'white', border:'none', cursor:'pointer'}}
+                  style={{padding:'0.75rem 1rem', borderRadius:'10px', background:'var(--active-gradient)', color:'white', border:'none', cursor: isSearching ? 'not-allowed' : 'pointer', opacity: isSearching ? 0.7 : 1}}
+                  disabled={isSearching}
+                  aria-label={str.searchBtn}
                 >
-                  <Search size={20} />
+                  {isSearching ? <RefreshCw size={20} className="spin-icon" /> : <Search size={20} />}
                 </button>
               </div>
 
               {isSearching ? (
-                <div style={{textAlign:'center', padding:'2rem', color:'var(--text-muted)'}}>{str.searching}</div>
+                <div style={{textAlign:'center', padding:'2rem', color:'var(--text-muted)'}} aria-live="polite">{str.searching}</div>
               ) : (
                 <div style={{display:'flex', flexDirection:'column', gap:'0.5rem'}}>
                   {searchResults.map((item, idx) => (
-                    <div 
+                    <button
                       key={idx} 
                       onClick={() => selectLocation(item)}
-                      style={{padding:'1rem', borderRadius:'10px', background:'var(--card-bg)', cursor:'pointer', border:'1px solid var(--border-color)'}}
+                      style={{textAlign: 'left', padding:'1rem', borderRadius:'10px', background:'var(--card-bg)', cursor:'pointer', border:'1px solid var(--border-color)', color:'var(--text-main)'}}
                     >
                       <div style={{fontWeight:'700', fontSize:'1rem'}}>{item.display_name.split(',')[0]}</div>
                       <div style={{fontSize:'0.8rem', color:'var(--text-muted)'}}>{item.display_name}</div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}

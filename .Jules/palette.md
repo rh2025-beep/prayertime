@@ -1,0 +1,3 @@
+## 2025-01-08 - Accessible Search Results
+**Learning:** Found a recurring pattern in the app where interactive list items (like search results) were implemented as clickable `<div>` elements (`onClick={() => selectLocation(item)}`) instead of semantic `<button>` tags. This meant users navigating via keyboard couldn't tab to or select a search result, rendering the search modal largely inaccessible without a mouse or touch screen.
+**Action:** Always convert interactive, custom-styled list items to semantic `<button>` elements (or `<a>` if they navigate). This provides built-in focus states, correct screen reader semantics, and native keyboard interaction (Enter/Space to activate) with zero extra custom JS handlers.
