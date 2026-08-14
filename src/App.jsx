@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Settings, Calendar, Clock, MapPin, Sun, Moon, Sunrise, Sunset, CloudSun, Locate, Search, Compass, ChevronDown, ArrowLeft, Info, Maximize, AlertTriangle, RefreshCw, Compass as CompassIcon, Download, Bell, BellOff } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
@@ -650,16 +650,24 @@ function App() {
     return () => clearInterval(timer);
   }, []);
 
+  // ⚡ Bolt: Calculate timezone offset once when timezone changes instead of
+  // calling toLocaleString() every second or render loop. Reduces parsing time significantly.
+  const tzOffsetMs = useMemo(() => {
+    if (!metaInfo || !metaInfo.timezone) return 0;
+    try {
+      const now = new Date();
+      const tzStr = now.toLocaleString("en-US", { timeZone: metaInfo.timezone });
+      const localStr = now.toLocaleString("en-US");
+      return new Date(tzStr).getTime() - new Date(localStr).getTime();
+    } catch {
+      return 0;
+    }
+  }, [metaInfo]);
+
   useEffect(() => {
     if (!timings) return;
     
-    const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
-       try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
-       } catch {
-         return currentTime;
-       }
-     })() : currentTime;
+    const tzTime = metaInfo && metaInfo.timezone ? new Date(currentTime.getTime() + tzOffsetMs) : currentTime;
 
     const nowMin = tzTime.getHours() * 60 + tzTime.getMinutes();
     const nowSec = tzTime.getSeconds();
@@ -800,7 +808,7 @@ function App() {
     const calcProgress = (elapsedSec / totalDurationSec) * 100;
     setProgressPercent(Math.min(100, Math.max(0, calcProgress)));
 
-  }, [currentTime, timings, prayersList, metaInfo, lang]);
+  }, [currentTime, timings, prayersList, metaInfo, lang, tzOffsetMs]);
 
   // Sync Android Home Screen Widget payload & notify native widget manager immediately
   useEffect(() => {
@@ -996,13 +1004,7 @@ function App() {
     return `${formatNumber(activeTime.getDate(), lang)} ${getMonthName(activeTime.getMonth(), lang)} ${formatNumber(activeTime.getFullYear(), lang)}`;
   };
 
-const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
-       try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
-       } catch {
-         return currentTime;
-       }
-     })() : currentTime;
+  const tzTime = metaInfo && metaInfo.timezone ? new Date(currentTime.getTime() + tzOffsetMs) : currentTime;
 
   const currentHour = tzTime.getHours();
   const currentMin = tzTime.getMinutes();
