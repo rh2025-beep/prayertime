@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Settings, Calendar, Clock, MapPin, Sun, Moon, Sunrise, Sunset, CloudSun, Locate, Search, Compass, ChevronDown, ArrowLeft, Info, Maximize, AlertTriangle, RefreshCw, Compass as CompassIcon, Download, Bell, BellOff } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
@@ -650,35 +650,27 @@ function App() {
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    if (!timings) return;
-    
-    const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
-       try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
-       } catch {
-         return currentTime;
-       }
-     })() : currentTime;
+  // Performance Optimization (Bolt): Memoize the intervals array calculation
+  // This array was previously being re-created on every 1-second tick because it was
+  // inside the useEffect that depends on currentTime.
+  // By memoizing it based on its true dependencies (timings and lang), we avoid
+  // unnecessary object allocations and calculations 60 times a minute.
+  const { memoizedIntervals, fajrMin, ishaMin } = useMemo(() => {
+    if (!timings) return { memoizedIntervals: [], fajrMin: 0, ishaMin: 0 };
 
-    const nowMin = tzTime.getHours() * 60 + tzTime.getMinutes();
-    const nowSec = tzTime.getSeconds();
-    const nowTotalSec = nowMin * 60 + nowSec;
-
-    const fajrMin = getMinutes(timings.Fajr);
+    const calcFajrMin = getMinutes(timings.Fajr);
     const sunriseMin = getMinutes(timings.Sunrise);
     const dhuhrMin = getMinutes(timings.Dhuhr);
     const asrMin = getMinutes(timings.Asr);
     const maghribMin = getMinutes(timings.Sunset || timings.Maghrib);
-    const ishaMin = getMinutes(timings.Isha);
+    const calcIshaMin = getMinutes(timings.Isha);
 
-    // Map the 6 continuous timeline intervals across 24 hours
     const intervals = [
       {
         key: 'Fajr',
         name: lang === 'bn' ? 'ফজর' : 'Fajr',
         time: timings.Fajr,
-        startMin: fajrMin,
+        startMin: calcFajrMin,
         endMin: sunriseMin,
         isPrayer: true,
         nextPrayerKey: 'Sunrise',
@@ -723,29 +715,47 @@ function App() {
         name: lang === 'bn' ? 'মাগরিব' : 'Maghrib',
         time: timings.Maghrib || timings.Sunset,
         startMin: maghribMin,
-        endMin: ishaMin,
+        endMin: calcIshaMin,
         isPrayer: true,
         nextPrayerKey: 'Isha',
         nextPrayerName: lang === 'bn' ? 'ইশা' : 'Isha',
-        nextPrayerTargetMin: ishaMin
+        nextPrayerTargetMin: calcIshaMin
       },
       {
         key: 'Isha',
         name: lang === 'bn' ? 'ইশা' : 'Isha',
         time: timings.Isha,
-        startMin: ishaMin,
-        endMin: fajrMin + 24 * 60,
+        startMin: calcIshaMin,
+        endMin: calcFajrMin + 24 * 60,
         isPrayer: true,
         nextPrayerKey: 'Fajr',
         nextPrayerName: lang === 'bn' ? 'ফজর' : 'Fajr',
-        nextPrayerTargetMin: fajrMin
+        nextPrayerTargetMin: calcFajrMin
       }
     ];
+
+    return { memoizedIntervals: intervals, fajrMin: calcFajrMin, ishaMin: calcIshaMin };
+  }, [timings, lang]);
+
+  useEffect(() => {
+    if (!timings || memoizedIntervals.length === 0) return;
+
+    const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
+       try {
+         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+       } catch {
+         return currentTime;
+       }
+     })() : currentTime;
+
+    const nowMin = tzTime.getHours() * 60 + tzTime.getMinutes();
+    const nowSec = tzTime.getSeconds();
+    const nowTotalSec = nowMin * 60 + nowSec;
 
     let currentInterval = null;
     let cMin = nowMin;
 
-    for (let interval of intervals) {
+    for (let interval of memoizedIntervals) {
       let intervalStart = interval.startMin;
       let intervalEnd = interval.endMin;
       let checkMin = nowMin;
@@ -762,7 +772,7 @@ function App() {
     }
 
     if (!currentInterval) {
-      currentInterval = intervals[0];
+      currentInterval = memoizedIntervals[0];
     }
 
     // Prev Milestone / Start Label
@@ -800,7 +810,7 @@ function App() {
     const calcProgress = (elapsedSec / totalDurationSec) * 100;
     setProgressPercent(Math.min(100, Math.max(0, calcProgress)));
 
-  }, [currentTime, timings, prayersList, metaInfo, lang]);
+  }, [currentTime, timings, prayersList, metaInfo, memoizedIntervals, fajrMin, ishaMin]);
 
   // Sync Android Home Screen Widget payload & notify native widget manager immediately
   useEffect(() => {
