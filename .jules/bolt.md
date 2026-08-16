@@ -1,0 +1,3 @@
+## 2024-05-19 - Unnecessary String Parsing on Frequent Ticks
+**Learning:** In a codebase featuring a 1-second interval ticking clock (like a countdown/prayer app), deriving values directly inside the render phase or inside the interval's `useEffect` (like parsing time strings via regex) scales poorly and causes major performance degradation over long sessions.
+**Action:** Always memoize derived state that depends on infrequent updates (e.g., daily API responses) rather than recalculating them on every single interval tick or render cycle. Use `useMemo` for any heavy time calculations or string manipulations that don't depend on the ticking clock.

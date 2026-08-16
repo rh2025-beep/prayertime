@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Settings, Calendar, Clock, MapPin, Sun, Moon, Sunrise, Sunset, CloudSun, Locate, Search, Compass, ChevronDown, ArrowLeft, Info, Maximize, AlertTriangle, RefreshCw, Compass as CompassIcon, Download, Bell, BellOff } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
@@ -650,27 +650,41 @@ function App() {
     return () => clearInterval(timer);
   }, []);
 
+  // Memoize Expensive Derived State
+  const tzTime = useMemo(() => {
+    return (metaInfo && metaInfo.timezone) ? (() => {
+      try {
+        return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+      } catch {
+        return currentTime;
+      }
+    })() : currentTime;
+  }, [currentTime, metaInfo]);
+
+  const parsedTimings = useMemo(() => {
+    if (!timings) return null;
+    return {
+      fajrMin: getMinutes(timings.Fajr),
+      sunriseMin: getMinutes(timings.Sunrise),
+      dhuhrMin: getMinutes(timings.Dhuhr),
+      asrMin: getMinutes(timings.Asr),
+      maghribMin: getMinutes(timings.Sunset || timings.Maghrib),
+      ishaMin: getMinutes(timings.Isha)
+    };
+  }, [timings]);
+
+  const forbiddenTimesInfo = useMemo(() => {
+    return timings ? getForbiddenTimes(timings) : null;
+  }, [timings]);
+
   useEffect(() => {
-    if (!timings) return;
-    
-    const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
-       try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
-       } catch {
-         return currentTime;
-       }
-     })() : currentTime;
+    if (!timings || !parsedTimings) return;
 
     const nowMin = tzTime.getHours() * 60 + tzTime.getMinutes();
     const nowSec = tzTime.getSeconds();
     const nowTotalSec = nowMin * 60 + nowSec;
 
-    const fajrMin = getMinutes(timings.Fajr);
-    const sunriseMin = getMinutes(timings.Sunrise);
-    const dhuhrMin = getMinutes(timings.Dhuhr);
-    const asrMin = getMinutes(timings.Asr);
-    const maghribMin = getMinutes(timings.Sunset || timings.Maghrib);
-    const ishaMin = getMinutes(timings.Isha);
+    const { fajrMin, sunriseMin, dhuhrMin, asrMin, maghribMin, ishaMin } = parsedTimings;
 
     // Map the 6 continuous timeline intervals across 24 hours
     const intervals = [
@@ -800,7 +814,7 @@ function App() {
     const calcProgress = (elapsedSec / totalDurationSec) * 100;
     setProgressPercent(Math.min(100, Math.max(0, calcProgress)));
 
-  }, [currentTime, timings, prayersList, metaInfo, lang]);
+  }, [tzTime, timings, parsedTimings, prayersList, lang]);
 
   // Sync Android Home Screen Widget payload & notify native widget manager immediately
   useEffect(() => {
@@ -996,19 +1010,10 @@ function App() {
     return `${formatNumber(activeTime.getDate(), lang)} ${getMonthName(activeTime.getMonth(), lang)} ${formatNumber(activeTime.getFullYear(), lang)}`;
   };
 
-const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
-       try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
-       } catch {
-         return currentTime;
-       }
-     })() : currentTime;
-
   const currentHour = tzTime.getHours();
   const currentMin = tzTime.getMinutes();
   const currentMinStr = currentMin < 10 ? `0${currentMin}` : `${currentMin}`;
 
-  const forbiddenTimesInfo = timings ? getForbiddenTimes(timings) : null;
   const nowMin = currentHour * 60 + currentMin;
   const activeForbiddenKey = checkCurrentForbidden(nowMin, forbiddenTimesInfo);
   const isCurrentForbidden = Boolean(activeForbiddenKey);
