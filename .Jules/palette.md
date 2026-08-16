@@ -1,0 +1,3 @@
+## 2026-08-16 - Adding Keyboard Accessibility to Interactive Elements
+**Learning:** In React applications, using `div` elements with an `onClick` handler but no keyboard listeners or semantic roles creates an invisible barrier for non-mouse users. We noticed that interactive UI components like search result items and the top location bar were inaccessible to keyboard-only navigation.
+**Action:** Always add `role="button"`, `tabIndex={0}`, `onKeyDown` handlers (listening for "Enter" or "Space"), and descriptive `aria-label`s whenever making a non-interactive element (like a `div` or `span`) clickable.
