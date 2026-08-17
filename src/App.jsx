@@ -1678,7 +1678,7 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
               <div className="sheet-drag-handle" />
               <div className="modal-header" style={{marginBottom: '1rem'}}>
                 <span className="modal-title">{str.searchLoc}</span>
-                <button className="close-btn" onClick={closeSearch}>&times;</button>
+                <button className="close-btn" onClick={closeSearch} title={str.cancel} aria-label={str.cancel}>&times;</button>
               </div>
               
               <div style={{display:'flex', gap:'0.5rem', marginBottom:'1rem'}}>
@@ -1687,11 +1687,14 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={str.searchCity}
+                  aria-label={str.searchCity}
                   style={{flex:1, padding:'0.75rem', borderRadius:'10px', border:'1px solid var(--border-color)', background:'var(--bg-main)', color:'var(--text-main)', fontSize:'1rem'}}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch(searchQuery)}
                 />
                 <button 
                   onClick={() => handleSearch(searchQuery)}
+                  title={str.searchBtn}
+                  aria-label={str.searchBtn}
                   style={{padding:'0.75rem 1rem', borderRadius:'10px', background:'var(--active-gradient)', color:'white', border:'none', cursor:'pointer'}}
                 >
                   <Search size={20} />
@@ -1801,7 +1804,7 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                       <RefreshCw size={16} style={{ color: 'var(--primary-green)' }} />
                       <span>{str.calibrateTitle}</span>
                     </div>
-                    <button onClick={() => setShowCalibrationHelp(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', opacity: 0.6, fontSize: '1rem', color: 'var(--text-main)' }}>&times;</button>
+                    <button onClick={() => setShowCalibrationHelp(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', opacity: 0.6, fontSize: '1rem', color: 'var(--text-main)' }} title={str.cancel} aria-label={str.cancel}>&times;</button>
                   </div>
                   <p style={{ fontSize: '0.8rem', opacity: 0.9, margin: '4px 0', lineHeight: 1.35 }}>
                     {str.calibrateGuide}

@@ -1,0 +1,3 @@
+## 2026-08-17 - Accessibility of Icon-Only Buttons in Modals
+**Learning:** The application extensively uses icon-only buttons for actions like 'Close' and 'Search' within modals (e.g., Search Location, Calibration Guide). These were missing critical ARIA labels, making them inaccessible to screen readers, but the localized strings were already available in the translation object.
+**Action:** Reused existing localization variables (like `str.cancel`, `str.searchBtn`, and `str.searchCity`) to populate `aria-label` and `title` attributes on these interactive elements to ensure accessibility and provide native browser tooltips.
