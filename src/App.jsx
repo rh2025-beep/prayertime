@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Settings, Calendar, Clock, MapPin, Sun, Moon, Sunrise, Sunset, CloudSun, Locate, Search, Compass, ChevronDown, ArrowLeft, Info, Maximize, AlertTriangle, RefreshCw, Compass as CompassIcon, Download, Bell, BellOff } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
@@ -207,6 +207,23 @@ const getPrayerEndTime = (key, timings) => {
 };
 
 function App() {
+  const [metaInfo, setMetaInfo] = useState(null);
+
+  // Cache Intl.DateTimeFormat instance to avoid recreating it on every render for tzTime calculation
+  const memoizedTimezoneFormatter = useMemo(() => {
+    if (!metaInfo || !metaInfo.timezone) return null;
+    try {
+      return new Intl.DateTimeFormat("en-US", {
+        timeZone: metaInfo.timezone,
+        year: 'numeric', month: 'numeric', day: 'numeric',
+        hour: 'numeric', minute: 'numeric', second: 'numeric',
+        hourCycle: 'h23',
+      });
+    } catch {
+      return null;
+    }
+  }, [metaInfo]);
+
   const [theme, setTheme] = useStickyState('light', 'app-theme');
   const [colorTheme, setColorTheme] = useStickyState('emerald', 'app-color-theme');
   const [widgetStyle, setWidgetStyle] = useStickyState('theme', 'app-widget-style');
@@ -283,7 +300,6 @@ function App() {
       StatusBar.setStyle({ style: Style.Light }); // Light style gives dark text on light backgrounds
     }
   }, []);
-  const [metaInfo, setMetaInfo] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   const [activePrayer, setActivePrayer] = useState(null);
@@ -653,9 +669,9 @@ function App() {
   useEffect(() => {
     if (!timings) return;
     
-    const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
+    const tzTime = memoizedTimezoneFormatter ? (() => {
        try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+         return new Date(memoizedTimezoneFormatter.format(currentTime));
        } catch {
          return currentTime;
        }
@@ -800,7 +816,7 @@ function App() {
     const calcProgress = (elapsedSec / totalDurationSec) * 100;
     setProgressPercent(Math.min(100, Math.max(0, calcProgress)));
 
-  }, [currentTime, timings, prayersList, metaInfo, lang]);
+  }, [currentTime, timings, prayersList, metaInfo, lang, memoizedTimezoneFormatter]);
 
   // Sync Android Home Screen Widget payload & notify native widget manager immediately
   useEffect(() => {
@@ -996,9 +1012,9 @@ function App() {
     return `${formatNumber(activeTime.getDate(), lang)} ${getMonthName(activeTime.getMonth(), lang)} ${formatNumber(activeTime.getFullYear(), lang)}`;
   };
 
-const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
+const tzTime = memoizedTimezoneFormatter ? (() => {
        try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+         return new Date(memoizedTimezoneFormatter.format(currentTime));
        } catch {
          return currentTime;
        }
