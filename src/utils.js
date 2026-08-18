@@ -128,6 +128,26 @@ export const getForbiddenTimes = (timings) => {
   };
 };
 
+const tzCache = { timezone: null, formatter: null };
+
+export const getTzTime = (date, timezone) => {
+  if (!timezone) return date;
+  try {
+    if (tzCache.timezone !== timezone) {
+      const formatter = new Intl.DateTimeFormat("en-US", {
+        timeZone: timezone,
+        year: 'numeric', month: 'numeric', day: 'numeric',
+        hour: 'numeric', minute: 'numeric', second: 'numeric'
+      });
+      tzCache.formatter = formatter;
+      tzCache.timezone = timezone;
+    }
+    return new Date(tzCache.formatter.format(date));
+  } catch {
+    return date;
+  }
+};
+
 export const checkCurrentForbidden = (nowMin, forbiddenTimes) => {
   if (!forbiddenTimes) return null;
   if (nowMin >= forbiddenTimes.sunrise.startMin && nowMin < forbiddenTimes.sunrise.endMin) {
