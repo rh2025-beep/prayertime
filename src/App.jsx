@@ -5,7 +5,7 @@ import { Capacitor } from '@capacitor/core';
 import { App as CapacitorApp } from '@capacitor/app';
 import Screensaver from './components/Screensaver';
 import './App.css';
-import { formatNumber, formatTime, getMinutes, formatTimeDiff, getDayName, getMonthName, getForbiddenTimes, checkCurrentForbidden, calculateOfflinePrayerTimes } from './utils';
+import { formatNumber, formatTime, getMinutes, formatTimeDiff, getDayName, getMonthName, getForbiddenTimes, checkCurrentForbidden, calculateOfflinePrayerTimes, getTzTime } from './utils';
 import { initAudioContext, playSoundSample, requestNotificationPermission, schedulePrayerNotifications } from './services/notificationService';
 import { subscribeCompass } from './services/compassService';
 
@@ -653,13 +653,7 @@ function App() {
   useEffect(() => {
     if (!timings) return;
     
-    const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
-       try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
-       } catch {
-         return currentTime;
-       }
-     })() : currentTime;
+    const tzTime = (metaInfo && metaInfo.timezone) ? getTzTime(currentTime, metaInfo.timezone) : currentTime;
 
     const nowMin = tzTime.getHours() * 60 + tzTime.getMinutes();
     const nowSec = tzTime.getSeconds();
@@ -996,13 +990,7 @@ function App() {
     return `${formatNumber(activeTime.getDate(), lang)} ${getMonthName(activeTime.getMonth(), lang)} ${formatNumber(activeTime.getFullYear(), lang)}`;
   };
 
-const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
-       try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
-       } catch {
-         return currentTime;
-       }
-     })() : currentTime;
+const tzTime = (metaInfo && metaInfo.timezone) ? getTzTime(currentTime, metaInfo.timezone) : currentTime;
 
   const currentHour = tzTime.getHours();
   const currentMin = tzTime.getMinutes();
