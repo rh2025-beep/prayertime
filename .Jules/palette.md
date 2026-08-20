@@ -1,0 +1,3 @@
+## 2025-03-01 - Add empty state and disabled state in search modal
+**Learning:** Adding empty states and disabling action buttons while operations are pending (or inputs are invalid) significantly improves accessibility and user feedback, reducing confusion for screen reader users and visual users alike.
+**Action:** Ensure that dynamic search inputs and form submissions use disabled states when operations are incomplete, and provide explicit text or ARIA feedback when lists have zero results.

@@ -54,14 +54,16 @@ const t = {
     downloadModalTitle: "অ্যান্ড্রয়েড অ্যাপ ডাউনলোড", downloadModalDesc: "Enjoy offline Azan alerts, widget support, and Qibla compass.", downloadBtn: "ডাউনলোড APK",
     forbiddenTimes: "সালাতের নিষিদ্ধ সময়", forbiddenNotice: "এই ৩টি সময়ে যেকোনো সালাত আদায় করা নিষিদ্ধ", forbiddenSunrise: "সূর্যোদয়কালীন", forbiddenZawal: "দ্বিপ্রহর (জাওয়াল)", forbiddenSunset: "সূর্যাস্তকালীন", currentlyForbidden: "বর্তমান সময় সালাতের নিষিদ্ধ সময়", sunriseForbiddenTip: "সূর্য ওঠার পর ১৫ মি.", zawalForbiddenTip: "যোহরের ১০ মি. পূর্বে", sunsetForbiddenTip: "সূর্যাস্তের ১৫ মি. পূর্বে",
     trueNorth: "ট্রু নর্থ (GPS)", magneticNorth: "ম্যাগনেটিক নর্থ", declinationLabel: "ডিক্লিনেশন", sensorAccuracy: "সেন্সর সঠিকতা", accuracyHigh: "উচ্চ", accuracyMedium: "মাঝারি", accuracyLow: "কম", accuracyUnreliable: "অনির্ভরযোগ্য", calibrateTitle: "সেন্সর ক্যালিব্রেশন", calibrateGuide: "কম্পাসের সঠিকতা বাড়াতে ফোনটি ৩D স্পেসে ৮ (Figure-8) আকৃতিতে কয়েকবার ঘোরান।", tiltWarning: "কম্পাসের সঠিক ফলাফলের জন্য ফোনটি সমতল রাখুন",
-    offlineNotice: "অফলাইন মোড: অ্যাস্ট্রোনমিক্যাল সোলার গণনা সক্রিয়"
+    offlineNotice: "অফলাইন মোড: অ্যাস্ট্রোনমিক্যাল সোলার গণনা সক্রিয়",
+    noResults: "কোন ফলাফল পাওয়া যায়নি"
   },
   en: {
     appTitle: "Prayer Times", settings: "Settings", theme: "Theme", hijri: "Hijri", loading: "Loading...", timeRemaining: "Ends In", timeStarting: "Starts In", waiting: "Waiting", timeElapsed: "Time Elapsed", next: "Next", start: "Start", end: "End", sunrise: "Sunrise", sunset: "Sunset", midnight: "Islamic Midnight", lastThird: "Last Third of Night", asrMethod: "Asr Method", standard: "Standard (Shafi)", hanafi: "Hanafi", language: "Language", searchCity: "Search city...", searching: "Searching...", locationError: "Location not found", localTime: "Local Time", searchBtn: "Search", searchLoc: "Search Location", cancel: "Cancel", bangladeshTime: "Local Time", qibla: "Qibla", qiblaTitle: "Qibla Compass", qiblaDegree: "Qibla Direction", north: "North", deviceHeading: "Heading", permissionRequired: "Sensor Permission Required", enableCompass: "Enable Compass", light: "Light Mode", dark: "Dark Mode", installApp: "Install the app for quick access to prayer times", installBtn: "Install", dismissBtn: "Not Now", errorLoading: "Failed to load prayer times. Check your internet connection.", retryBtn: "Retry", hijriAdjustment: "Hijri Date Adjustment", kaabaDirection: "Kaaba Direction", distanceToKaaba: "Distance to Kaaba", yourDirection: "Your Direction", kilometer: "km", helpfulTips: "Helpful Tips", tipsText: "Keep away from magnetic items and hold the device flat for accuracy.", compassInsecure: "Compass sensor is blocked on insecure HTTP. Please access using HTTPS or localhost.", compassUnsupported: "Compass sensor is not supported by your device or browser.",
     downloadModalTitle: "Download Android App", downloadModalDesc: "Enjoy offline Azan alerts, widget support, and Qibla compass.", downloadBtn: "Download APK",
     forbiddenTimes: "Prohibited Prayer Times", forbiddenNotice: "Prayer is prohibited during these 3 times", forbiddenSunrise: "Sunrise Period", forbiddenZawal: "Midday (Zawal)", forbiddenSunset: "Sunset Period", currentlyForbidden: "Current time is a Prohibited Prayer Time", sunriseForbiddenTip: "15 mins after sunrise", zawalForbiddenTip: "10 mins before Dhuhr", sunsetForbiddenTip: "15 mins before sunset",
     trueNorth: "True North (GPS)", magneticNorth: "Magnetic North", declinationLabel: "Declination", sensorAccuracy: "Sensor Accuracy", accuracyHigh: "High", accuracyMedium: "Medium", accuracyLow: "Low", accuracyUnreliable: "Unreliable", calibrateTitle: "Sensor Calibration", calibrateGuide: "Rotate device in a 3D figure-8 pattern to calibrate magnetic sensor.", tiltWarning: "Hold your device flat for best compass accuracy",
-    offlineNotice: "Offline Mode: Solar astronomical calculation active"
+    offlineNotice: "Offline Mode: Solar astronomical calculation active",
+    noResults: "No results found"
   }
 };
 
@@ -234,6 +236,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
   const [timings, setTimings] = useState(() => {
     try {
@@ -930,9 +933,13 @@ function App() {
 
   const handleSearch = async (query) => {
     setSearchQuery(query);
-    if (query.trim().length < 3) return setSearchResults([]);
+    if (query.trim().length < 3) {
+      setHasSearched(false);
+      return setSearchResults([]);
+    }
     
     setIsSearching(true);
+    setHasSearched(false);
     try {
       const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&accept-language=${lang}`);
       const data = await res.json();
@@ -942,6 +949,7 @@ function App() {
       setSearchResults([]);
     }
     setIsSearching(false);
+    setHasSearched(true);
   };
 
   const selectLocation = (item) => {
@@ -1678,21 +1686,27 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
               <div className="sheet-drag-handle" />
               <div className="modal-header" style={{marginBottom: '1rem'}}>
                 <span className="modal-title">{str.searchLoc}</span>
-                <button className="close-btn" onClick={closeSearch}>&times;</button>
+                <button className="close-btn" onClick={closeSearch} aria-label={str.cancel}>&times;</button>
               </div>
               
               <div style={{display:'flex', gap:'0.5rem', marginBottom:'1rem'}}>
                 <input 
                   type="text" 
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setHasSearched(false);
+                  }}
                   placeholder={str.searchCity}
+                  aria-label={str.searchCity}
                   style={{flex:1, padding:'0.75rem', borderRadius:'10px', border:'1px solid var(--border-color)', background:'var(--bg-main)', color:'var(--text-main)', fontSize:'1rem'}}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch(searchQuery)}
+                  onKeyDown={(e) => { if (!isSearching && searchQuery.trim().length >= 3 && e.key === 'Enter') handleSearch(searchQuery); }}
                 />
                 <button 
                   onClick={() => handleSearch(searchQuery)}
-                  style={{padding:'0.75rem 1rem', borderRadius:'10px', background:'var(--active-gradient)', color:'white', border:'none', cursor:'pointer'}}
+                  aria-label={str.searchBtn}
+                  disabled={isSearching || searchQuery.trim().length < 3}
+                  style={{padding:'0.75rem 1rem', borderRadius:'10px', background:'var(--active-gradient)', color:'white', border:'none', cursor: (isSearching || searchQuery.trim().length < 3) ? 'not-allowed' : 'pointer', opacity: (isSearching || searchQuery.trim().length < 3) ? 0.5 : 1}}
                 >
                   <Search size={20} />
                 </button>
@@ -1700,6 +1714,8 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
 
               {isSearching ? (
                 <div style={{textAlign:'center', padding:'2rem', color:'var(--text-muted)'}}>{str.searching}</div>
+              ) : hasSearched && searchResults.length === 0 && searchQuery.trim().length >= 3 ? (
+                <div style={{textAlign:'center', padding:'2rem', color:'var(--text-muted)'}}>{str.noResults}</div>
               ) : (
                 <div style={{display:'flex', flexDirection:'column', gap:'0.5rem'}}>
                   {searchResults.map((item, idx) => (
