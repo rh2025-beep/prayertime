@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Settings, Calendar, Clock, MapPin, Sun, Moon, Sunrise, Sunset, CloudSun, Locate, Search, Compass, ChevronDown, ArrowLeft, Info, Maximize, AlertTriangle, RefreshCw, Compass as CompassIcon, Download, Bell, BellOff } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
@@ -500,6 +500,28 @@ function App() {
   const str = t[lang];
   const prayersList = PRAYERS[lang];
 
+  const tzFormatter = useMemo(() => {
+    if (metaInfo && metaInfo.timezone) {
+      try {
+        return new Intl.DateTimeFormat("en-US", {
+          timeZone: metaInfo.timezone,
+          year: 'numeric',
+          month: 'numeric',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: 'numeric',
+          second: 'numeric',
+          hour12: true
+        });
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }, [metaInfo?.timezone]);
+
+  const lastWidgetPayloadRef = useRef("");
+
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     document.documentElement.setAttribute('data-color-theme', `${colorTheme}-${theme}`);
@@ -653,9 +675,9 @@ function App() {
   useEffect(() => {
     if (!timings) return;
     
-    const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
+    const tzTime = tzFormatter ? (() => {
        try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+         return new Date(tzFormatter.format(currentTime));
        } catch {
          return currentTime;
        }
@@ -820,6 +842,10 @@ function App() {
           timings: timings
         };
 
+        const widgetPayloadStr = JSON.stringify({ widgetPayload, colorTheme, widgetStyle });
+        if (lastWidgetPayloadRef.current === widgetPayloadStr) return;
+        lastWidgetPayloadRef.current = widgetPayloadStr;
+
         if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PrayerWidget')) {
           Capacitor.Plugins.PrayerWidget.updateWidget({
             colorTheme: colorTheme,
@@ -828,9 +854,10 @@ function App() {
           }).catch((e) => console.warn("PrayerWidget plugin failed", e));
         }
 
-        localStorage.setItem('widget_data', JSON.stringify(widgetPayload));
+        const storedPayloadStr = JSON.stringify(widgetPayload);
+        localStorage.setItem('widget_data', storedPayloadStr);
         if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
-          window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: JSON.stringify(widgetPayload) });
+          window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: storedPayloadStr });
         }
       } catch (e) {
         console.warn("Widget sync failed", e);
@@ -996,16 +1023,16 @@ function App() {
     return `${formatNumber(activeTime.getDate(), lang)} ${getMonthName(activeTime.getMonth(), lang)} ${formatNumber(activeTime.getFullYear(), lang)}`;
   };
 
-const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
+const tzTimeComponent = tzFormatter ? (() => {
        try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+         return new Date(tzFormatter.format(currentTime));
        } catch {
          return currentTime;
        }
      })() : currentTime;
 
-  const currentHour = tzTime.getHours();
-  const currentMin = tzTime.getMinutes();
+  const currentHour = tzTimeComponent.getHours();
+  const currentMin = tzTimeComponent.getMinutes();
   const currentMinStr = currentMin < 10 ? `0${currentMin}` : `${currentMin}`;
 
   const forbiddenTimesInfo = timings ? getForbiddenTimes(timings) : null;
