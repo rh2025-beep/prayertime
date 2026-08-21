@@ -1,0 +1,3 @@
+## 2026-08-21 - Icon-Only Button Accessibility
+**Learning:** This application relies heavily on icon-only buttons for key interactions (e.g., triggering the screensaver, searching locations, opening settings/qibla compass, closing modals). While some had `title` attributes, many lacked `aria-label`s, meaning screen reader users would have no context for their function. In bilingual apps (bn/en), ensuring these labels map correctly to the active language is crucial.
+**Action:** Always verify that interactive elements lacking visible text (like `<button>`s with only `<Icon />` components) have explicit `aria-label` attributes. Use the existing translation maps (e.g., `str.cancel`, `str.searchBtn`) to ensure the accessibility labels match the user's selected language.
