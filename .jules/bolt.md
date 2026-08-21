@@ -1,0 +1,3 @@
+## 2026-08-21 - Optimize High-Frequency Interval Loops
+**Learning:** In high-frequency interval loops (e.g., a 1-second timer for rendering clocks or calculating countdowns), heavy operations like `Intl.DateTimeFormat` instantiation and synchronous disk I/O (`localStorage.setItem`) can accumulate and block the main thread, leading to UI jank and decreased responsiveness, particularly on lower-end devices.
+**Action:** Prevent blocking the main thread by memoizing expensive formatters (e.g., caching `Intl.DateTimeFormat` objects by timezone) and introducing dirty-checking for side-effects (e.g., using `useRef` to skip redundant native calls or `localStorage` writes if the payload is unchanged).
