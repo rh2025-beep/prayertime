@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Settings, Calendar, Clock, MapPin, Sun, Moon, Sunrise, Sunset, CloudSun, Locate, Search, Compass, ChevronDown, ArrowLeft, Info, Maximize, AlertTriangle, RefreshCw, Compass as CompassIcon, Download, Bell, BellOff } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
@@ -8,6 +8,19 @@ import './App.css';
 import { formatNumber, formatTime, getMinutes, formatTimeDiff, getDayName, getMonthName, getForbiddenTimes, checkCurrentForbidden, calculateOfflinePrayerTimes } from './utils';
 import { initAudioContext, playSoundSample, requestNotificationPermission, schedulePrayerNotifications } from './services/notificationService';
 import { subscribeCompass } from './services/compassService';
+
+// --- Memoized Formatters ---
+const tzFormatters = {};
+const getTzFormatter = (timezone) => {
+  if (!tzFormatters[timezone]) {
+    tzFormatters[timezone] = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      year: "numeric", month: "numeric", day: "numeric",
+      hour: "numeric", minute: "numeric", second: "numeric"
+    });
+  }
+  return tzFormatters[timezone];
+};
 
 // --- Custom Hooks ---
 function useStickyState(defaultValue, key) {
@@ -655,7 +668,7 @@ function App() {
     
     const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
        try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+         return new Date(getTzFormatter(metaInfo.timezone).format(currentTime));
        } catch {
          return currentTime;
        }
@@ -802,6 +815,8 @@ function App() {
 
   }, [currentTime, timings, prayersList, metaInfo, lang]);
 
+  const lastWidgetPayloadRef = useRef(null);
+
   // Sync Android Home Screen Widget payload & notify native widget manager immediately
   useEffect(() => {
     if (nextPrayer && timings && prevMilestone) {
@@ -820,6 +835,10 @@ function App() {
           timings: timings
         };
 
+        const payloadStr = JSON.stringify(widgetPayload);
+        if (lastWidgetPayloadRef.current === payloadStr) return;
+        lastWidgetPayloadRef.current = payloadStr;
+
         if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PrayerWidget')) {
           Capacitor.Plugins.PrayerWidget.updateWidget({
             colorTheme: colorTheme,
@@ -828,9 +847,9 @@ function App() {
           }).catch((e) => console.warn("PrayerWidget plugin failed", e));
         }
 
-        localStorage.setItem('widget_data', JSON.stringify(widgetPayload));
+        localStorage.setItem('widget_data', payloadStr);
         if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
-          window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: JSON.stringify(widgetPayload) });
+          window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: payloadStr });
         }
       } catch (e) {
         console.warn("Widget sync failed", e);
@@ -998,7 +1017,7 @@ function App() {
 
 const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
        try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+         return new Date(getTzFormatter(metaInfo.timezone).format(currentTime));
        } catch {
          return currentTime;
        }
