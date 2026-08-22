@@ -1,0 +1,3 @@
+## 2025-02-28 - Missing ARIA Labels on Modals and Icon Buttons
+**Learning:** Found several full-screen modals and interactive icon-only buttons lacking proper `aria-label` tags, compromising screen reader navigation for critical operations like searching and navigating settings/calibration options.
+**Action:** Always verify custom modal close buttons and icon-only utility buttons have meaningful `aria-label` tags that correctly map to their semantic action using the app's localized strings.

@@ -1429,7 +1429,7 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
           <div className="fullscreen-view">
             <div className="fullscreen-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <button className="fullscreen-back-btn" onClick={closeSettings} title="Back" aria-label="Back">
+                <button className="fullscreen-back-btn" onClick={closeSettings} title={str.cancel} aria-label={str.cancel}>
                   <ArrowLeft size={22} />
                 </button>
                 <span className="fullscreen-title">{str.settings}</span>
@@ -1678,7 +1678,7 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
               <div className="sheet-drag-handle" />
               <div className="modal-header" style={{marginBottom: '1rem'}}>
                 <span className="modal-title">{str.searchLoc}</span>
-                <button className="close-btn" onClick={closeSearch}>&times;</button>
+                <button className="close-btn" onClick={closeSearch} aria-label={str.cancel} title={str.cancel}>&times;</button>
               </div>
               
               <div style={{display:'flex', gap:'0.5rem', marginBottom:'1rem'}}>
@@ -1687,12 +1687,15 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={str.searchCity}
+                  aria-label={str.searchCity}
                   style={{flex:1, padding:'0.75rem', borderRadius:'10px', border:'1px solid var(--border-color)', background:'var(--bg-main)', color:'var(--text-main)', fontSize:'1rem'}}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch(searchQuery)}
                 />
                 <button 
                   onClick={() => handleSearch(searchQuery)}
                   style={{padding:'0.75rem 1rem', borderRadius:'10px', background:'var(--active-gradient)', color:'white', border:'none', cursor:'pointer'}}
+                  aria-label={str.searchBtn}
+                  title={str.searchBtn}
                 >
                   <Search size={20} />
                 </button>
@@ -1722,7 +1725,7 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
           <div className="fullscreen-view">
             <div className="fullscreen-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <button className="fullscreen-back-btn" onClick={closeQibla} title="Back" aria-label="Back">
+                <button className="fullscreen-back-btn" onClick={closeQibla} title={str.cancel} aria-label={str.cancel}>
                   <ArrowLeft size={22} />
                 </button>
                 <span className="fullscreen-title">{str.qiblaTitle}</span>
@@ -1731,6 +1734,7 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                 className={`compass-header-btn ${showCalibrationHelp ? 'active' : ''}`}
                 onClick={() => setShowCalibrationHelp(!showCalibrationHelp)}
                 title={str.calibrateTitle}
+                aria-label={str.calibrateTitle}
               >
                 <RefreshCw size={20} className={showCalibrationHelp ? 'spin-icon' : ''} />
               </button>
@@ -1801,7 +1805,7 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                       <RefreshCw size={16} style={{ color: 'var(--primary-green)' }} />
                       <span>{str.calibrateTitle}</span>
                     </div>
-                    <button onClick={() => setShowCalibrationHelp(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', opacity: 0.6, fontSize: '1rem', color: 'var(--text-main)' }}>&times;</button>
+                    <button onClick={() => setShowCalibrationHelp(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', opacity: 0.6, fontSize: '1rem', color: 'var(--text-main)' }} aria-label={str.cancel} title={str.cancel}>&times;</button>
                   </div>
                   <p style={{ fontSize: '0.8rem', opacity: 0.9, margin: '4px 0', lineHeight: 1.35 }}>
                     {str.calibrateGuide}
