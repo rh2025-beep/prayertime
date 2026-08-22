@@ -1,0 +1,3 @@
+## 2024-05-18 - Dirty Checking Synchronous Calls in High-Frequency Interval Loops
+**Learning:** In high-frequency React hooks (like a `setInterval` or `useEffect` that fires every second based on timer state), repeatedly invoking synchronous disk I/O (`localStorage.setItem`) and native plugin bridges (Capacitor) can severely block the main thread and degrade performance, especially on low-end devices.
+**Action:** Use a `useRef` to store a serialized representation (e.g., `JSON.stringify`) of the previous payload. Perform a dirty check before executing expensive operations to ensure they only run when the actual data payload changes, avoiding unnecessary executions.
