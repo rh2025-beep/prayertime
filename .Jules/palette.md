@@ -1,0 +1,3 @@
+## 2024-08-23 - Dynamic ARIA Labels using App Translation Objects
+**Learning:** Found that when injecting ARIA labels into components that support multiple languages, it is crucial to bind them directly to the dynamically computed translation variables (e.g., `str.cancel`, `str.searchLoc`) rather than hardcoding English strings. This prevents screen reader accessibility regressions for non-English users.
+**Action:** Always check the repository's localization strategy (in this app, it is the dynamically assigned `str` object derived from `t`) and use those strings for any new `aria-label` or `alt` text injected into UI elements to maintain a fully localized screen reader experience.
