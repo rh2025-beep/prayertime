@@ -1,0 +1,3 @@
+## 2025-02-27 - Optimizing Capacitor High-Frequency Interval Hooks
+**Learning:** Calling `new Intl.DateTimeFormat` or synchronous APIs (`localStorage.setItem`, Capacitor Plugins) continuously in a 1-second interval loop (such as for countdowns or progress bars) can block the main thread and cause micro-stutters, particularly on low-end mobile devices. Also, applying { hour12: false } to `Intl.DateTimeFormat` will output 24:xx on midnight which breaks `new Date()` parsing.
+**Action:** Always memoize expensive formatters outside of the component lifecycle, strictly avoid `hour12: false` if the output string is intended to be re-parsed as a Date object, and utilize dirty-checking (e.g. `useRef`) to skip executing blocking I/O calls if payload data hasn't mutated.
