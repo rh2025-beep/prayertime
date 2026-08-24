@@ -9,6 +9,35 @@ import { formatNumber, formatTime, getMinutes, formatTimeDiff, getDayName, getMo
 import { initAudioContext, playSoundSample, requestNotificationPermission, schedulePrayerNotifications } from './services/notificationService';
 import { subscribeCompass } from './services/compassService';
 
+// --- Memoized Formatters ---
+const getMemoizedDate = (() => {
+  const formatterCache = new Map();
+
+  return (date, timeZone) => {
+    if (!timeZone) return date;
+
+    try {
+      let formatter = formatterCache.get(timeZone);
+      if (!formatter) {
+        formatter = new Intl.DateTimeFormat('en-US', {
+          timeZone,
+          year: 'numeric',
+          month: 'numeric',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: 'numeric',
+          second: 'numeric',
+          hour12: true // Prevent 24:xx midnight parsing bug
+        });
+        formatterCache.set(timeZone, formatter);
+      }
+      return new Date(formatter.format(date));
+    } catch {
+      return date;
+    }
+  };
+})();
+
 // --- Custom Hooks ---
 function useStickyState(defaultValue, key) {
   const [value, setValue] = useState(() => {
@@ -653,13 +682,7 @@ function App() {
   useEffect(() => {
     if (!timings) return;
     
-    const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
-       try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
-       } catch {
-         return currentTime;
-       }
-     })() : currentTime;
+    const tzTime = (metaInfo && metaInfo.timezone) ? getMemoizedDate(currentTime, metaInfo.timezone) : currentTime;
 
     const nowMin = tzTime.getHours() * 60 + tzTime.getMinutes();
     const nowSec = tzTime.getSeconds();
@@ -803,6 +826,8 @@ function App() {
   }, [currentTime, timings, prayersList, metaInfo, lang]);
 
   // Sync Android Home Screen Widget payload & notify native widget manager immediately
+  const lastWidgetPayloadRef = useRef(null);
+
   useEffect(() => {
     if (nextPrayer && timings && prevMilestone) {
       try {
@@ -820,6 +845,12 @@ function App() {
           timings: timings
         };
 
+        const currentPayloadStr = JSON.stringify(widgetPayload);
+        if (lastWidgetPayloadRef.current === currentPayloadStr) {
+          return; // Skip expensive sync if payload hasn't changed
+        }
+        lastWidgetPayloadRef.current = currentPayloadStr;
+
         if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PrayerWidget')) {
           Capacitor.Plugins.PrayerWidget.updateWidget({
             colorTheme: colorTheme,
@@ -828,9 +859,9 @@ function App() {
           }).catch((e) => console.warn("PrayerWidget plugin failed", e));
         }
 
-        localStorage.setItem('widget_data', JSON.stringify(widgetPayload));
+        localStorage.setItem('widget_data', currentPayloadStr);
         if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
-          window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: JSON.stringify(widgetPayload) });
+          window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: currentPayloadStr });
         }
       } catch (e) {
         console.warn("Widget sync failed", e);
@@ -996,13 +1027,7 @@ function App() {
     return `${formatNumber(activeTime.getDate(), lang)} ${getMonthName(activeTime.getMonth(), lang)} ${formatNumber(activeTime.getFullYear(), lang)}`;
   };
 
-const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
-       try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
-       } catch {
-         return currentTime;
-       }
-     })() : currentTime;
+const tzTime = (metaInfo && metaInfo.timezone) ? getMemoizedDate(currentTime, metaInfo.timezone) : currentTime;
 
   const currentHour = tzTime.getHours();
   const currentMin = tzTime.getMinutes();
