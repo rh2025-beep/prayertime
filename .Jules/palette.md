@@ -1,0 +1,3 @@
+## 2024-08-24 - Interactive Divs vs Accessible Buttons
+**Learning:** Found several `div` elements used as interactive components (e.g. search result items, location bar) that were missing basic accessibility features like `role`, `tabIndex`, and keyboard event handlers. This made them invisible to screen readers and unusable for keyboard-only navigation.
+**Action:** Always prefer semantic HTML elements like `<button>` over `<div>` for clickable interactions. If a `<div>` must be used due to layout constraints, ensure `role="button"`, `tabIndex={0}`, and `onKeyDown` handlers are added to support 'Enter' and 'Space' keys. Furthermore, ensure icon-only buttons always have an `aria-label`.
