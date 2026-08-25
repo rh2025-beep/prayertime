@@ -1,0 +1,3 @@
+## 2025-03-01 - Missing ARIA Labels on Modals and Icon Buttons
+**Learning:** Found a recurring pattern in this application where modals lacked appropriate `role="dialog"`, `aria-modal="true"`, and structural descriptions like `aria-labelledby`. Additionally, icon-only buttons (like search or close buttons) frequently omit `aria-label`s, rendering them opaque to screen readers.
+**Action:** When implementing or modifying modals and icon buttons in this codebase, explicitly check for and add these accessibility primitives (`role="dialog"`, `aria-label`, `aria-labelledby`, `aria-modal`) to maintain inclusive UX design.

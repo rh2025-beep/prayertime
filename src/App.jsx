@@ -1674,16 +1674,17 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
         {/* LOCATION SEARCH MODAL */}
         {isSearchOpen && (
           <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeSearch(); }}>
-            <div className="modal-content">
+            <div className="modal-content" role="dialog" aria-modal="true" aria-labelledby="search-modal-title">
               <div className="sheet-drag-handle" />
               <div className="modal-header" style={{marginBottom: '1rem'}}>
-                <span className="modal-title">{str.searchLoc}</span>
-                <button className="close-btn" onClick={closeSearch}>&times;</button>
+                <span id="search-modal-title" className="modal-title">{str.searchLoc}</span>
+                <button className="close-btn" aria-label={str.cancel} onClick={closeSearch}>&times;</button>
               </div>
               
               <div style={{display:'flex', gap:'0.5rem', marginBottom:'1rem'}}>
                 <input 
                   type="text" 
+                  aria-label={str.searchCity}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={str.searchCity}
@@ -1691,22 +1692,26 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch(searchQuery)}
                 />
                 <button 
+                  aria-label={str.searchBtn}
                   onClick={() => handleSearch(searchQuery)}
                   style={{padding:'0.75rem 1rem', borderRadius:'10px', background:'var(--active-gradient)', color:'white', border:'none', cursor:'pointer'}}
                 >
-                  <Search size={20} />
+                  <Search size={20} aria-hidden="true" />
                 </button>
               </div>
 
               {isSearching ? (
-                <div style={{textAlign:'center', padding:'2rem', color:'var(--text-muted)'}}>{str.searching}</div>
+                <div aria-live="polite" style={{textAlign:'center', padding:'2rem', color:'var(--text-muted)'}}>{str.searching}</div>
               ) : (
-                <div style={{display:'flex', flexDirection:'column', gap:'0.5rem'}}>
+                <div aria-live="polite" style={{display:'flex', flexDirection:'column', gap:'0.5rem'}}>
                   {searchResults.map((item, idx) => (
                     <div 
                       key={idx} 
                       onClick={() => selectLocation(item)}
                       style={{padding:'1rem', borderRadius:'10px', background:'var(--card-bg)', cursor:'pointer', border:'1px solid var(--border-color)'}}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && selectLocation(item)}
                     >
                       <div style={{fontWeight:'700', fontSize:'1rem'}}>{item.display_name.split(',')[0]}</div>
                       <div style={{fontSize:'0.8rem', color:'var(--text-muted)'}}>{item.display_name}</div>
