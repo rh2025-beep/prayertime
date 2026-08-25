@@ -1,0 +1,3 @@
+## 2024-05-19 - Prevent synchronous disk I/O and memoize expensive computations in high-frequency React hooks
+**Learning:** In high-frequency React effect loops (like a 1-second interval checking current time), operations that seem inexpensive at a glance—such as stringifying JSON and writing to `localStorage`, or generating localized date strings with `toLocaleString()`—can significantly block the main thread and drop frames over time.
+**Action:** Always dirty-check values with `useRef` before performing synchronous disk I/O (like `localStorage.setItem` or Capacitor bridge calls). In addition, cache/memoize instances of expensive built-in APIs like `Intl.DateTimeFormat` rather than recreating them per tick.

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Settings, Calendar, Clock, MapPin, Sun, Moon, Sunrise, Sunset, CloudSun, Locate, Search, Compass, ChevronDown, ArrowLeft, Info, Maximize, AlertTriangle, RefreshCw, Compass as CompassIcon, Download, Bell, BellOff } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
@@ -29,6 +29,19 @@ function useStickyState(defaultValue, key) {
   }, [key, value]);
   return [value, setValue];
 }
+
+// ⚡ Bolt: Memoize timezone formatter to prevent expensive instantiation in the 1-second interval loop
+const tzFormatterCache = new Map();
+const getTzFormatter = (timezone) => {
+  if (!tzFormatterCache.has(timezone)) {
+    tzFormatterCache.set(timezone, new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      year: 'numeric', month: 'numeric', day: 'numeric',
+      hour: 'numeric', minute: 'numeric', second: 'numeric'
+    }));
+  }
+  return tzFormatterCache.get(timezone);
+};
 
 // --- Constants & Translations ---
 const PRAYERS = {
@@ -207,6 +220,8 @@ const getPrayerEndTime = (key, timings) => {
 };
 
 function App() {
+  const lastWidgetPayloadRef = useRef(null);
+
   const [theme, setTheme] = useStickyState('light', 'app-theme');
   const [colorTheme, setColorTheme] = useStickyState('emerald', 'app-color-theme');
   const [widgetStyle, setWidgetStyle] = useStickyState('theme', 'app-widget-style');
@@ -655,7 +670,7 @@ function App() {
     
     const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
        try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+         return new Date(getTzFormatter(metaInfo.timezone).format(currentTime));
        } catch {
          return currentTime;
        }
@@ -820,6 +835,11 @@ function App() {
           timings: timings
         };
 
+        // ⚡ Bolt: Dirty-check widget payload to prevent synchronous disk I/O in the 1-second interval loop
+        const newPayloadStr = JSON.stringify(widgetPayload);
+        if (lastWidgetPayloadRef.current === newPayloadStr) return;
+        lastWidgetPayloadRef.current = newPayloadStr;
+
         if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PrayerWidget')) {
           Capacitor.Plugins.PrayerWidget.updateWidget({
             colorTheme: colorTheme,
@@ -828,9 +848,9 @@ function App() {
           }).catch((e) => console.warn("PrayerWidget plugin failed", e));
         }
 
-        localStorage.setItem('widget_data', JSON.stringify(widgetPayload));
+        localStorage.setItem('widget_data', newPayloadStr);
         if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
-          window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: JSON.stringify(widgetPayload) });
+          window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: newPayloadStr });
         }
       } catch (e) {
         console.warn("Widget sync failed", e);
@@ -998,7 +1018,7 @@ function App() {
 
 const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
        try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+         return new Date(getTzFormatter(metaInfo.timezone).format(currentTime));
        } catch {
          return currentTime;
        }
