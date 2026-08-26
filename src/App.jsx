@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Settings, Calendar, Clock, MapPin, Sun, Moon, Sunrise, Sunset, CloudSun, Locate, Search, Compass, ChevronDown, ArrowLeft, Info, Maximize, AlertTriangle, RefreshCw, Compass as CompassIcon, Download, Bell, BellOff } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
@@ -207,6 +207,31 @@ const getPrayerEndTime = (key, timings) => {
 };
 
 function App() {
+  const tzFormatterRef = useRef(null);
+  const lastTzRef = useRef(null);
+  const lastWidgetPayloadRef = useRef(null);
+
+  const getTzTime = (dateObj, timezone) => {
+    if (!timezone) return dateObj;
+    try {
+      if (lastTzRef.current !== timezone || !tzFormatterRef.current) {
+        tzFormatterRef.current = new Intl.DateTimeFormat("en-US", {
+          timeZone: timezone,
+          year: 'numeric',
+          month: 'numeric',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: 'numeric',
+          second: 'numeric'
+        });
+        lastTzRef.current = timezone;
+      }
+      return new Date(tzFormatterRef.current.format(dateObj));
+    } catch {
+      return dateObj;
+    }
+  };
+
   const [theme, setTheme] = useStickyState('light', 'app-theme');
   const [colorTheme, setColorTheme] = useStickyState('emerald', 'app-color-theme');
   const [widgetStyle, setWidgetStyle] = useStickyState('theme', 'app-widget-style');
@@ -653,13 +678,7 @@ function App() {
   useEffect(() => {
     if (!timings) return;
     
-    const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
-       try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
-       } catch {
-         return currentTime;
-       }
-     })() : currentTime;
+    const tzTime = (metaInfo && metaInfo.timezone) ? getTzTime(currentTime, metaInfo.timezone) : currentTime;
 
     const nowMin = tzTime.getHours() * 60 + tzTime.getMinutes();
     const nowSec = tzTime.getSeconds();
@@ -820,17 +839,22 @@ function App() {
           timings: timings
         };
 
-        if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PrayerWidget')) {
-          Capacitor.Plugins.PrayerWidget.updateWidget({
-            colorTheme: colorTheme,
-            widgetStyle: widgetStyle,
-            data: widgetPayload
-          }).catch((e) => console.warn("PrayerWidget plugin failed", e));
-        }
+        const serializedPayload = JSON.stringify(widgetPayload);
+        if (lastWidgetPayloadRef.current !== serializedPayload) {
+          lastWidgetPayloadRef.current = serializedPayload;
 
-        localStorage.setItem('widget_data', JSON.stringify(widgetPayload));
-        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
-          window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: JSON.stringify(widgetPayload) });
+          if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PrayerWidget')) {
+            Capacitor.Plugins.PrayerWidget.updateWidget({
+              colorTheme: colorTheme,
+              widgetStyle: widgetStyle,
+              data: widgetPayload
+            }).catch((e) => console.warn("PrayerWidget plugin failed", e));
+          }
+
+          localStorage.setItem('widget_data', serializedPayload);
+          if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
+            window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: serializedPayload });
+          }
         }
       } catch (e) {
         console.warn("Widget sync failed", e);
@@ -996,13 +1020,7 @@ function App() {
     return `${formatNumber(activeTime.getDate(), lang)} ${getMonthName(activeTime.getMonth(), lang)} ${formatNumber(activeTime.getFullYear(), lang)}`;
   };
 
-const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
-       try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
-       } catch {
-         return currentTime;
-       }
-     })() : currentTime;
+  const tzTime = (metaInfo && metaInfo.timezone) ? getTzTime(currentTime, metaInfo.timezone) : currentTime;
 
   const currentHour = tzTime.getHours();
   const currentMin = tzTime.getMinutes();

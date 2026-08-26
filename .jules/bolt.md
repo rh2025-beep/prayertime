@@ -1,0 +1,3 @@
+## 2026-08-25 - Avoid blocking main thread on high-frequency intervals by memoizing `Intl.DateTimeFormat` and skipping identical `localStorage` writes.
+**Learning:** Instantiating `Intl.DateTimeFormat` within a 1-second interval loop is expensive. Setting `hour12: false` with it triggers an `h24` hour cycle bug where `new Date()` fails to parse "24:xx" correctly. Additionally, writing unchanged data to `localStorage` or Capacitor plugins in high-frequency loops unnecessarily blocks the main thread.
+**Action:** Always memoize `Intl.DateTimeFormat` and use `useRef` to cache the serialized state of payload writes, aborting writes if the state has not changed. Do not set `hour12: false` when parsing `Intl.DateTimeFormat` outputs with `new Date()`.
