@@ -1426,13 +1426,13 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
 
         {/* SETTINGS FULLSCREEN VIEW */}
         {isSettingsOpen && (
-          <div className="fullscreen-view">
+          <div className="fullscreen-view" role="dialog" aria-modal="true" aria-labelledby="settings-title">
             <div className="fullscreen-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <button className="fullscreen-back-btn" onClick={closeSettings} title="Back" aria-label="Back">
                   <ArrowLeft size={22} />
                 </button>
-                <span className="fullscreen-title">{str.settings}</span>
+                <span id="settings-title" className="fullscreen-title">{str.settings}</span>
               </div>
             </div>
 
@@ -1674,11 +1674,11 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
         {/* LOCATION SEARCH MODAL */}
         {isSearchOpen && (
           <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeSearch(); }}>
-            <div className="modal-content">
+            <div className="modal-content" role="dialog" aria-modal="true" aria-labelledby="search-title">
               <div className="sheet-drag-handle" />
               <div className="modal-header" style={{marginBottom: '1rem'}}>
-                <span className="modal-title">{str.searchLoc}</span>
-                <button className="close-btn" onClick={closeSearch}>&times;</button>
+                <span id="search-title" className="modal-title">{str.searchLoc}</span>
+                <button className="close-btn" onClick={closeSearch} aria-label={str.dismissBtn}>&times;</button>
               </div>
               
               <div style={{display:'flex', gap:'0.5rem', marginBottom:'1rem'}}>
@@ -1687,11 +1687,13 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={str.searchCity}
+                  aria-label={str.searchCity}
                   style={{flex:1, padding:'0.75rem', borderRadius:'10px', border:'1px solid var(--border-color)', background:'var(--bg-main)', color:'var(--text-main)', fontSize:'1rem'}}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch(searchQuery)}
                 />
                 <button 
                   onClick={() => handleSearch(searchQuery)}
+                  aria-label={str.searchLoc}
                   style={{padding:'0.75rem 1rem', borderRadius:'10px', background:'var(--active-gradient)', color:'white', border:'none', cursor:'pointer'}}
                 >
                   <Search size={20} />
@@ -1719,13 +1721,13 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
         )}
         {/* QIBLA COMPASS FULLSCREEN VIEW */}
         {isQiblaOpen && (
-          <div className="fullscreen-view">
+          <div className="fullscreen-view" role="dialog" aria-modal="true" aria-labelledby="qibla-title">
             <div className="fullscreen-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <button className="fullscreen-back-btn" onClick={closeQibla} title="Back" aria-label="Back">
                   <ArrowLeft size={22} />
                 </button>
-                <span className="fullscreen-title">{str.qiblaTitle}</span>
+                <span id="qibla-title" className="fullscreen-title">{str.qiblaTitle}</span>
               </div>
               <button 
                 className={`compass-header-btn ${showCalibrationHelp ? 'active' : ''}`}
