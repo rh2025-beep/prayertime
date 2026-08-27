@@ -1,0 +1,3 @@
+## 2026-08-27 - `toLocaleString` is expensive when called frequently
+**Learning:** Calling `Date.prototype.toLocaleString` with formatting options (like `{ timeZone: metaInfo.timezone }`) inside a high-frequency loop (like the 1-second `setInterval` in `App.jsx`) is very computationally expensive because it creates a new `Intl.DateTimeFormat` instance on every call. Our tests showed it takes over a second for 10k calls, while a cached `Intl.DateTimeFormat` object only takes a fraction of a second (about ~116ms).
+**Action:** When formatting dates frequently with options, instantiate and memoize an `Intl.DateTimeFormat` object via `useMemo` and call its `.format()` method instead. Ensure the hour options don't trigger the h24 (24:xx) edge case by avoiding `hour12: false`.
