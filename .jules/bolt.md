@@ -1,0 +1,3 @@
+## 2024-05-17 - Prevent blocking main thread in high-frequency interval loops
+**Learning:** In high-frequency interval loops (e.g., 1-second timers), dynamic construction of expensive objects (like `Intl.DateTimeFormat`) or synchronous disk I/O / IPC bridge calls (like `localStorage.setItem` and Capacitor `updateWidget`) heavily block the main thread and impact frontend performance.
+**Action:** Always memoize expensive formatters using `useMemo` when configuring localization settings, and implement dirty-checking mechanisms using `useRef` to store serialized states before performing synchronous I/O or native bridge calls.
