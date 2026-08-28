@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Settings, Calendar, Clock, MapPin, Sun, Moon, Sunrise, Sunset, CloudSun, Locate, Search, Compass, ChevronDown, ArrowLeft, Info, Maximize, AlertTriangle, RefreshCw, Compass as CompassIcon, Download, Bell, BellOff } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
@@ -275,6 +275,24 @@ function App() {
     }
   });
   const [isOfflineData, setIsOfflineData] = useState(false);
+
+  // Memoize timezone formatter to prevent main thread blocking on 1s timer
+  const tzFormatter = useMemo(() => {
+    if (!metaInfo || !metaInfo.timezone) return null;
+    try {
+      return new Intl.DateTimeFormat('en-US', {
+        timeZone: metaInfo.timezone,
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric'
+      });
+    } catch {
+      return null;
+    }
+  }, [metaInfo?.timezone]);
 
   // Initialize Capacitor Status Bar
   useEffect(() => {
@@ -653,9 +671,9 @@ function App() {
   useEffect(() => {
     if (!timings) return;
     
-    const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
+    const tzTime = tzFormatter ? (() => {
        try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+         return new Date(tzFormatter.format(currentTime));
        } catch {
          return currentTime;
        }
@@ -802,6 +820,8 @@ function App() {
 
   }, [currentTime, timings, prayersList, metaInfo, lang]);
 
+  const lastWidgetPayloadStrRef = useRef("");
+
   // Sync Android Home Screen Widget payload & notify native widget manager immediately
   useEffect(() => {
     if (nextPrayer && timings && prevMilestone) {
@@ -820,6 +840,13 @@ function App() {
           timings: timings
         };
 
+        // Include colorTheme and widgetStyle in the dirty-check to ensure theme changes trigger an update immediately
+        const payloadStr = JSON.stringify({ ...widgetPayload, themeCheck: colorTheme, styleCheck: widgetStyle });
+        if (payloadStr === lastWidgetPayloadStrRef.current) {
+          return; // Skip native call and disk I/O if payload hasn't changed
+        }
+        lastWidgetPayloadStrRef.current = payloadStr;
+
         if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PrayerWidget')) {
           Capacitor.Plugins.PrayerWidget.updateWidget({
             colorTheme: colorTheme,
@@ -828,9 +855,9 @@ function App() {
           }).catch((e) => console.warn("PrayerWidget plugin failed", e));
         }
 
-        localStorage.setItem('widget_data', JSON.stringify(widgetPayload));
+        localStorage.setItem('widget_data', payloadStr);
         if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
-          window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: JSON.stringify(widgetPayload) });
+          window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: payloadStr });
         }
       } catch (e) {
         console.warn("Widget sync failed", e);
@@ -996,9 +1023,9 @@ function App() {
     return `${formatNumber(activeTime.getDate(), lang)} ${getMonthName(activeTime.getMonth(), lang)} ${formatNumber(activeTime.getFullYear(), lang)}`;
   };
 
-const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
+const tzTime = tzFormatter ? (() => {
        try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+         return new Date(tzFormatter.format(currentTime));
        } catch {
          return currentTime;
        }
