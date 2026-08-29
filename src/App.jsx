@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Settings, Calendar, Clock, MapPin, Sun, Moon, Sunrise, Sunset, CloudSun, Locate, Search, Compass, ChevronDown, ArrowLeft, Info, Maximize, AlertTriangle, RefreshCw, Compass as CompassIcon, Download, Bell, BellOff } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
@@ -8,6 +8,24 @@ import './App.css';
 import { formatNumber, formatTime, getMinutes, formatTimeDiff, getDayName, getMonthName, getForbiddenTimes, checkCurrentForbidden, calculateOfflinePrayerTimes } from './utils';
 import { initAudioContext, playSoundSample, requestNotificationPermission, schedulePrayerNotifications } from './services/notificationService';
 import { subscribeCompass } from './services/compassService';
+
+// --- Helpers ---
+const tzFormatters = {};
+const getTzTime = (currentTime, timezone) => {
+  if (!timezone) return currentTime;
+  try {
+    if (!tzFormatters[timezone]) {
+      tzFormatters[timezone] = new Intl.DateTimeFormat("en-US", {
+        timeZone: timezone,
+        year: 'numeric', month: 'numeric', day: 'numeric',
+        hour: 'numeric', minute: 'numeric', second: 'numeric'
+      });
+    }
+    return new Date(tzFormatters[timezone].format(currentTime));
+  } catch {
+    return currentTime;
+  }
+};
 
 // --- Custom Hooks ---
 function useStickyState(defaultValue, key) {
@@ -479,6 +497,7 @@ function App() {
   const [cardinal, setCardinal] = useState('N');
   const [isFlat, setIsFlat] = useState(true);
   const [showCalibrationHelp, setShowCalibrationHelp] = useState(false);
+  const lastWidgetPayloadRef = useRef(null);
 
   useEffect(() => {
     if (!isQiblaOpen) {
@@ -653,13 +672,7 @@ function App() {
   useEffect(() => {
     if (!timings) return;
     
-    const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
-       try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
-       } catch {
-         return currentTime;
-       }
-     })() : currentTime;
+    const tzTime = getTzTime(currentTime, metaInfo && metaInfo.timezone);
 
     const nowMin = tzTime.getHours() * 60 + tzTime.getMinutes();
     const nowSec = tzTime.getSeconds();
@@ -820,6 +833,12 @@ function App() {
           timings: timings
         };
 
+        const payloadStr = JSON.stringify({ widgetPayload, colorTheme, widgetStyle });
+        if (lastWidgetPayloadRef.current === payloadStr) {
+          return; // Skip redundant updates
+        }
+        lastWidgetPayloadRef.current = payloadStr;
+
         if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PrayerWidget')) {
           Capacitor.Plugins.PrayerWidget.updateWidget({
             colorTheme: colorTheme,
@@ -828,9 +847,10 @@ function App() {
           }).catch((e) => console.warn("PrayerWidget plugin failed", e));
         }
 
-        localStorage.setItem('widget_data', JSON.stringify(widgetPayload));
+        const widgetDataStr = JSON.stringify(widgetPayload);
+        localStorage.setItem('widget_data', widgetDataStr);
         if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
-          window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: JSON.stringify(widgetPayload) });
+          window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: widgetDataStr });
         }
       } catch (e) {
         console.warn("Widget sync failed", e);
@@ -996,13 +1016,7 @@ function App() {
     return `${formatNumber(activeTime.getDate(), lang)} ${getMonthName(activeTime.getMonth(), lang)} ${formatNumber(activeTime.getFullYear(), lang)}`;
   };
 
-const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
-       try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
-       } catch {
-         return currentTime;
-       }
-     })() : currentTime;
+  const tzTime = getTzTime(currentTime, metaInfo && metaInfo.timezone);
 
   const currentHour = tzTime.getHours();
   const currentMin = tzTime.getMinutes();
