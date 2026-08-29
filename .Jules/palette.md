@@ -1,0 +1,3 @@
+## 2024-05-18 - Missing ARIA attributes on modals
+**Learning:** In this application, standard modals (`modal-overlay`) and full-screen view overlays (`fullscreen-view`) visually behave like dialogs but lack standard HTML attributes to denote this to screen readers.
+**Action:** When implementing new modals or modifying existing ones, explicitly add `role="dialog"`, `aria-modal="true"`, and an appropriate `aria-label` or `aria-labelledby` referencing translated strings.
