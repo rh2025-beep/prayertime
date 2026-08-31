@@ -1,0 +1,3 @@
+## 2026-08-31 - Missing Accessibility Attributes on Modals
+**Learning:** Discovered a recurring pattern where fullscreen views and overlay components act as modals (like Settings, Qibla compass, and Location Search) but were missing basic WAI-ARIA dialog attributes. Screen readers would not correctly identify them as distinct dialog windows or announce their context upon opening.
+**Action:** Always verify that components taking over the screen or functioning as overlays explicitly include `role="dialog"`, `aria-modal="true"`, and are labeled via `aria-labelledby` linking to their visible titles. Additionally, ensure icon-only control buttons inside these modals have proper `aria-label`s and decorative icons use `aria-hidden="true"`.
