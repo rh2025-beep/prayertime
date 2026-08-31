@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Settings, Calendar, Clock, MapPin, Sun, Moon, Sunrise, Sunset, CloudSun, Locate, Search, Compass, ChevronDown, ArrowLeft, Info, Maximize, AlertTriangle, RefreshCw, Compass as CompassIcon, Download, Bell, BellOff } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
@@ -298,6 +298,24 @@ function App() {
   const [fetchDateStr, setFetchDateStr] = useState(new Date().toDateString());
   const [apiError, setApiError] = useState(null);
   const [isScreensaverActive, setIsScreensaverActive] = useState(false);
+  const widgetCacheRef = useRef('');
+
+  // Memoize timezone formatter so it's not recreated every second
+  const tzFormatter = useMemo(() => {
+    if (metaInfo && metaInfo.timezone) {
+      try {
+        return new Intl.DateTimeFormat('en-US', {
+          timeZone: metaInfo.timezone,
+          year: 'numeric', month: 'numeric', day: 'numeric',
+          hour: 'numeric', minute: 'numeric', second: 'numeric',
+          hourCycle: 'h23' // Use h23 to avoid hour12 related bugs where midnight is 24:xx
+        });
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  }, [metaInfo]);
 
   // Listen for Android launcher app shortcut intents (e.g. Qibla Compass, Settings)
   useEffect(() => {
@@ -650,16 +668,19 @@ function App() {
     return () => clearInterval(timer);
   }, []);
 
+  const tzTime = useMemo(() => {
+    if (tzFormatter) {
+      try {
+        return new Date(tzFormatter.format(currentTime));
+      } catch (e) {
+        return currentTime;
+      }
+    }
+    return currentTime;
+  }, [currentTime, tzFormatter]);
+
   useEffect(() => {
     if (!timings) return;
-    
-    const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
-       try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
-       } catch {
-         return currentTime;
-       }
-     })() : currentTime;
 
     const nowMin = tzTime.getHours() * 60 + tzTime.getMinutes();
     const nowSec = tzTime.getSeconds();
@@ -820,17 +841,24 @@ function App() {
           timings: timings
         };
 
-        if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PrayerWidget')) {
-          Capacitor.Plugins.PrayerWidget.updateWidget({
-            colorTheme: colorTheme,
-            widgetStyle: widgetStyle,
-            data: widgetPayload
-          }).catch((e) => console.warn("PrayerWidget plugin failed", e));
-        }
+        const payloadStr = JSON.stringify(widgetPayload);
 
-        localStorage.setItem('widget_data', JSON.stringify(widgetPayload));
-        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
-          window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: JSON.stringify(widgetPayload) });
+        // Only run expensive native calls and sync disk I/O if the payload has changed
+        if (widgetCacheRef.current !== payloadStr) {
+          widgetCacheRef.current = payloadStr;
+
+          if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PrayerWidget')) {
+            Capacitor.Plugins.PrayerWidget.updateWidget({
+              colorTheme: colorTheme,
+              widgetStyle: widgetStyle,
+              data: widgetPayload
+            }).catch((e) => console.warn("PrayerWidget plugin failed", e));
+          }
+
+          localStorage.setItem('widget_data', payloadStr);
+          if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
+            window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: payloadStr });
+          }
         }
       } catch (e) {
         console.warn("Widget sync failed", e);
@@ -996,13 +1024,6 @@ function App() {
     return `${formatNumber(activeTime.getDate(), lang)} ${getMonthName(activeTime.getMonth(), lang)} ${formatNumber(activeTime.getFullYear(), lang)}`;
   };
 
-const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
-       try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
-       } catch {
-         return currentTime;
-       }
-     })() : currentTime;
 
   const currentHour = tzTime.getHours();
   const currentMin = tzTime.getMinutes();
