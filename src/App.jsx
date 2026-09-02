@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Settings, Calendar, Clock, MapPin, Sun, Moon, Sunrise, Sunset, CloudSun, Locate, Search, Compass, ChevronDown, ArrowLeft, Info, Maximize, AlertTriangle, RefreshCw, Compass as CompassIcon, Download, Bell, BellOff } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
@@ -634,6 +634,27 @@ function App() {
     return () => { activeFetch = false; };
   }, [config.lat, config.lng, config.school, fetchDateStr]);
 
+  // ⚡ Bolt Optimization: Memoize DateTimeFormat to avoid expensive recreation in interval loop
+  const tzFormatter = useMemo(() => {
+    if (metaInfo && metaInfo.timezone) {
+      try {
+        return new Intl.DateTimeFormat("en-US", {
+          timeZone: metaInfo.timezone,
+          year: "numeric",
+          month: "numeric",
+          day: "numeric",
+          hour: "numeric",
+          minute: "numeric",
+          second: "numeric",
+          hourCycle: "h23" // Ensures midnight is not parsed as 24:00 which breaks new Date()
+        });
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }, [metaInfo]);
+
   // 1-second timer to update current time and track day transitions (midnight crossings)
   useEffect(() => {
     const timer = setInterval(() => {
@@ -653,9 +674,9 @@ function App() {
   useEffect(() => {
     if (!timings) return;
     
-    const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
+    const tzTime = tzFormatter ? (() => {
        try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+         return new Date(tzFormatter.format(currentTime));
        } catch {
          return currentTime;
        }
@@ -800,7 +821,9 @@ function App() {
     const calcProgress = (elapsedSec / totalDurationSec) * 100;
     setProgressPercent(Math.min(100, Math.max(0, calcProgress)));
 
-  }, [currentTime, timings, prayersList, metaInfo, lang]);
+  }, [currentTime, timings, prayersList, metaInfo, lang, tzFormatter]);
+
+  const lastWidgetPayloadRef = useRef(null);
 
   // Sync Android Home Screen Widget payload & notify native widget manager immediately
   useEffect(() => {
@@ -820,6 +843,13 @@ function App() {
           timings: timings
         };
 
+        // ⚡ Bolt Optimization: Dirty-check the stringified payload before invoking heavy disk I/O / Bridge operations
+        const stringifiedPayload = JSON.stringify(widgetPayload);
+        if (lastWidgetPayloadRef.current === stringifiedPayload) {
+          return;
+        }
+        lastWidgetPayloadRef.current = stringifiedPayload;
+
         if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PrayerWidget')) {
           Capacitor.Plugins.PrayerWidget.updateWidget({
             colorTheme: colorTheme,
@@ -828,9 +858,9 @@ function App() {
           }).catch((e) => console.warn("PrayerWidget plugin failed", e));
         }
 
-        localStorage.setItem('widget_data', JSON.stringify(widgetPayload));
+        localStorage.setItem('widget_data', stringifiedPayload);
         if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
-          window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: JSON.stringify(widgetPayload) });
+          window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: stringifiedPayload });
         }
       } catch (e) {
         console.warn("Widget sync failed", e);
@@ -996,9 +1026,9 @@ function App() {
     return `${formatNumber(activeTime.getDate(), lang)} ${getMonthName(activeTime.getMonth(), lang)} ${formatNumber(activeTime.getFullYear(), lang)}`;
   };
 
-const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
+const tzTime = tzFormatter ? (() => {
        try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+         return new Date(tzFormatter.format(currentTime));
        } catch {
          return currentTime;
        }
