@@ -1,0 +1,3 @@
+## 2024-05-20 - Prevent 1s setInterval from causing sync disk I/O
+**Learning:** In high-frequency React interval loops, state changes like countdown timers (`timeLeft`) can cause `useEffect` hooks to trigger every second. If these effects contain synchronous operations like `localStorage.setItem` or Capacitor native bridge calls, it blocks the main thread unnecessarily when the derived payload data only actually changes infrequently (e.g. rounded minutes/progress).
+**Action:** Dirty-check derived payload strings (using `useRef` to store the last stringified state) before executing expensive I/O or bridge operations to ensure they only run when the actual data payload changes, rather than on every raw tick.
