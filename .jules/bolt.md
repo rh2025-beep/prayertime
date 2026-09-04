@@ -1,0 +1,3 @@
+## 2024-11-26 - Optimized App.jsx Date formatting and 1-second interval execution
+**Learning:** In a high-frequency interval loop (1-second timer in App.jsx), calling `toLocaleString` directly and executing synchronous disk I/O (`localStorage.setItem`) alongside Capacitor native calls on every tick blocks the main thread and severely hurts performance.
+**Action:** Prevent blocking the main thread by memoizing expensive formatters like `Intl.DateTimeFormat` with `useMemo`, formatting with `tzFormatter.format`, and dirty-checking synchronous calls (`localStorage.setItem`) and native plugin syncs using `useRef` to ensure they only fire when the payload has actually changed.
