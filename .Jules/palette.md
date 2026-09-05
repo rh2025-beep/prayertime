@@ -1,0 +1,3 @@
+## 2024-09-05 - Missing ARIA Attributes on Modals and Icon-Only Buttons
+**Learning:** In this application, modals and icon-only buttons frequently lack proper ARIA attributes, compromising screen reader accessibility. The pattern requires manually adding `role="dialog"`, `aria-modal="true"`, and linking a title via `aria-labelledby`. Additionally, icon-only buttons need `aria-label` and `title` attributes that utilize the existing localization strings (`str`).
+**Action:** Always ensure `role="dialog"`, `aria-modal="true"`, `aria-labelledby`, and localized `aria-label`s are explicitly added when modifying or creating modal and icon-only UI components in this app to maintain screen reader accessibility.
