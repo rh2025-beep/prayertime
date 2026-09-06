@@ -1,0 +1,3 @@
+## 2024-05-18 - Memoizing expensive formatters and dirty-checking I/O
+**Learning:** High-frequency interval loops (like a 1-second timer updating the current time) can easily block the main thread if they repeatedly instantiate expensive objects like `Intl.DateTimeFormat` or perform synchronous disk I/O (`localStorage.setItem`) and Capacitor native calls on every tick.
+**Action:** Memoize expensive formatters using `useRef` and ensure they use `hourCycle: 'h23'` when formatting for `new Date()` parsing to avoid midnight `24:xx` errors. Implement dirty-checking with `useRef` to skip I/O and native calls unless the actual payload has changed.
