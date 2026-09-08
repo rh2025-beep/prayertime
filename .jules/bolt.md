@@ -1,0 +1,3 @@
+## 2024-05-24 - Avoid synchronous I/O and expensive instantiations in high-frequency React hooks
+**Learning:** Found a severe performance anti-pattern in the codebase: `Intl.DateTimeFormat` was being instantiated via `toLocaleString` and synchronous `localStorage.setItem` writes were occurring on every 1-second interval tick within React `useEffect` loops. This blocks the main thread unnecessarily.
+**Action:** Always memoize expensive formatters (e.g., `Intl.DateTimeFormat`) outside of the component or via caching, and use `React.useRef` to implement dirty-checking (diffing stringified payloads) before committing to synchronous disk I/O or native Capacitor calls.
