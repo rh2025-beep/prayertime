@@ -1426,7 +1426,7 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
 
         {/* SETTINGS FULLSCREEN VIEW */}
         {isSettingsOpen && (
-          <div className="fullscreen-view">
+          <div className="fullscreen-view" role="dialog" aria-modal="true" aria-label={str.settings}>
             <div className="fullscreen-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <button className="fullscreen-back-btn" onClick={closeSettings} title="Back" aria-label="Back">
@@ -1674,11 +1674,11 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
         {/* LOCATION SEARCH MODAL */}
         {isSearchOpen && (
           <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeSearch(); }}>
-            <div className="modal-content">
+            <div className="modal-content" role="dialog" aria-modal="true" aria-label={str.searchLoc}>
               <div className="sheet-drag-handle" />
               <div className="modal-header" style={{marginBottom: '1rem'}}>
                 <span className="modal-title">{str.searchLoc}</span>
-                <button className="close-btn" onClick={closeSearch}>&times;</button>
+                <button className="close-btn" onClick={closeSearch} aria-label="Close">&times;</button>
               </div>
               
               <div style={{display:'flex', gap:'0.5rem', marginBottom:'1rem'}}>
@@ -1719,7 +1719,7 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
         )}
         {/* QIBLA COMPASS FULLSCREEN VIEW */}
         {isQiblaOpen && (
-          <div className="fullscreen-view">
+          <div className="fullscreen-view" role="dialog" aria-modal="true" aria-label={str.qiblaTitle}>
             <div className="fullscreen-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <button className="fullscreen-back-btn" onClick={closeQibla} title="Back" aria-label="Back">
