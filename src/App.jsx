@@ -1181,6 +1181,7 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                 className="glass-trigger-btn"
                 onClick={() => setIsScreensaverActive(true)}
                 title={lang === 'bn' ? 'স্ক্রিনসেভার চালু করুন' : 'Start Screensaver'}
+                aria-label={lang === 'bn' ? 'স্ক্রিনসেভার চালু করুন' : 'Start Screensaver'}
                 style={{ margin: 0, width: '36px', height: '36px', flexShrink: 0, position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}
               >
                 <Maximize size={18} />
@@ -1589,6 +1590,7 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                       return (
                         <button
                           key={p.key}
+                          aria-label={lang === 'bn' ? p.labelBn : p.labelEn}
                           onClick={() => setNotifConfig(prev => ({ ...prev, [p.key]: !prev[p.key] }))}
                           style={{
                             padding: '8px 4px',
@@ -1678,7 +1680,7 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
               <div className="sheet-drag-handle" />
               <div className="modal-header" style={{marginBottom: '1rem'}}>
                 <span className="modal-title">{str.searchLoc}</span>
-                <button className="close-btn" onClick={closeSearch}>&times;</button>
+                <button className="close-btn" aria-label={str.cancel} onClick={closeSearch}>&times;</button>
               </div>
               
               <div style={{display:'flex', gap:'0.5rem', marginBottom:'1rem'}}>
@@ -1692,6 +1694,7 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                 />
                 <button 
                   onClick={() => handleSearch(searchQuery)}
+                  aria-label={str.searchBtn}
                   style={{padding:'0.75rem 1rem', borderRadius:'10px', background:'var(--active-gradient)', color:'white', border:'none', cursor:'pointer'}}
                 >
                   <Search size={20} />
@@ -1731,6 +1734,7 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                 className={`compass-header-btn ${showCalibrationHelp ? 'active' : ''}`}
                 onClick={() => setShowCalibrationHelp(!showCalibrationHelp)}
                 title={str.calibrateTitle}
+                aria-label={str.calibrateTitle}
               >
                 <RefreshCw size={20} className={showCalibrationHelp ? 'spin-icon' : ''} />
               </button>
@@ -1751,7 +1755,7 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                     </span>
                   </div>
                 </div>
-                <button onClick={(e) => { e.stopPropagation(); detectLocation(); }} style={{ background: 'rgba(22, 101, 52, 0.08)', border: 'none', color: 'var(--primary-green)', cursor: 'pointer', display: 'flex', padding: '8px', borderRadius: '50%' }} title="Use GPS">
+                <button onClick={(e) => { e.stopPropagation(); detectLocation(); }} style={{ background: 'rgba(22, 101, 52, 0.08)', border: 'none', color: 'var(--primary-green)', cursor: 'pointer', display: 'flex', padding: '8px', borderRadius: '50%' }} title="Use GPS" aria-label="Use GPS">
                   <Locate size={20} />
                 </button>
               </div>
@@ -1801,7 +1805,7 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                       <RefreshCw size={16} style={{ color: 'var(--primary-green)' }} />
                       <span>{str.calibrateTitle}</span>
                     </div>
-                    <button onClick={() => setShowCalibrationHelp(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', opacity: 0.6, fontSize: '1rem', color: 'var(--text-main)' }}>&times;</button>
+                    <button aria-label={str.cancel} onClick={() => setShowCalibrationHelp(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', opacity: 0.6, fontSize: '1rem', color: 'var(--text-main)' }}>&times;</button>
                   </div>
                   <p style={{ fontSize: '0.8rem', opacity: 0.9, margin: '4px 0', lineHeight: 1.35 }}>
                     {str.calibrateGuide}
