@@ -1,0 +1,3 @@
+## 2025-02-18 - Prevent Main Thread Blocking in 1-Second Render Loops
+**Learning:** Instantiating `Intl.DateTimeFormat` and synchronously writing to disk (`localStorage.setItem`) alongside Capacitor native bridging inside a 1-second interval loop creates severe main-thread bottlenecks and battery drain.
+**Action:** Always memoize/cache heavy formatters (like `Intl.DateTimeFormat`) at the module level when used in high-frequency React effects/renders. Furthermore, use `useRef` to dirty-check complex payloads before triggering synchronous disk I/O and Native bridging calls to ensure they only fire when data has tangibly changed.

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Settings, Calendar, Clock, MapPin, Sun, Moon, Sunrise, Sunset, CloudSun, Locate, Search, Compass, ChevronDown, ArrowLeft, Info, Maximize, AlertTriangle, RefreshCw, Compass as CompassIcon, Download, Bell, BellOff } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
@@ -8,6 +8,31 @@ import './App.css';
 import { formatNumber, formatTime, getMinutes, formatTimeDiff, getDayName, getMonthName, getForbiddenTimes, checkCurrentForbidden, calculateOfflinePrayerTimes } from './utils';
 import { initAudioContext, playSoundSample, requestNotificationPermission, schedulePrayerNotifications } from './services/notificationService';
 import { subscribeCompass } from './services/compassService';
+
+// ⚡ Bolt Performance Optimization:
+// Cache Intl.DateTimeFormat instances by timezone to prevent expensive object
+// instantiations and main-thread blocking during the 1-second render loops.
+const tzFormatterCache = new Map();
+const getTzTime = (dateObj, timezone) => {
+  if (!timezone) return dateObj;
+  try {
+    if (!tzFormatterCache.has(timezone)) {
+      tzFormatterCache.set(timezone, new Intl.DateTimeFormat('en-US', {
+        timeZone: timezone,
+        year: 'numeric', month: 'numeric', day: 'numeric',
+        hour: 'numeric', minute: 'numeric', second: 'numeric',
+        hourCycle: 'h23' // Use h23 to avoid h24 midnight parsing issues
+      }));
+    }
+    const formatter = tzFormatterCache.get(timezone);
+    if (formatter) {
+      return new Date(formatter.format(dateObj));
+    }
+  } catch (e) {
+    console.warn(`Timezone formatting failed for ${timezone}:`, e);
+  }
+  return dateObj;
+};
 
 // --- Custom Hooks ---
 function useStickyState(defaultValue, key) {
@@ -653,13 +678,7 @@ function App() {
   useEffect(() => {
     if (!timings) return;
     
-    const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
-       try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
-       } catch {
-         return currentTime;
-       }
-     })() : currentTime;
+    const tzTime = getTzTime(currentTime, metaInfo?.timezone);
 
     const nowMin = tzTime.getHours() * 60 + tzTime.getMinutes();
     const nowSec = tzTime.getSeconds();
@@ -802,6 +821,10 @@ function App() {
 
   }, [currentTime, timings, prayersList, metaInfo, lang]);
 
+  // ⚡ Bolt Performance Optimization:
+  // Dirty-check widget payload before triggering expensive disk I/O and Native bridging every second.
+  const lastWidgetPayloadRef = useRef(null);
+
   // Sync Android Home Screen Widget payload & notify native widget manager immediately
   useEffect(() => {
     if (nextPrayer && timings && prevMilestone) {
@@ -820,6 +843,12 @@ function App() {
           timings: timings
         };
 
+        const payloadStr = JSON.stringify(widgetPayload);
+        if (lastWidgetPayloadRef.current === payloadStr) {
+          return; // Skip update if nothing tangibly changed
+        }
+        lastWidgetPayloadRef.current = payloadStr;
+
         if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PrayerWidget')) {
           Capacitor.Plugins.PrayerWidget.updateWidget({
             colorTheme: colorTheme,
@@ -828,9 +857,9 @@ function App() {
           }).catch((e) => console.warn("PrayerWidget plugin failed", e));
         }
 
-        localStorage.setItem('widget_data', JSON.stringify(widgetPayload));
+        localStorage.setItem('widget_data', payloadStr);
         if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
-          window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: JSON.stringify(widgetPayload) });
+          window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: payloadStr });
         }
       } catch (e) {
         console.warn("Widget sync failed", e);
@@ -996,13 +1025,7 @@ function App() {
     return `${formatNumber(activeTime.getDate(), lang)} ${getMonthName(activeTime.getMonth(), lang)} ${formatNumber(activeTime.getFullYear(), lang)}`;
   };
 
-const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
-       try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
-       } catch {
-         return currentTime;
-       }
-     })() : currentTime;
+  const tzTime = getTzTime(currentTime, metaInfo?.timezone);
 
   const currentHour = tzTime.getHours();
   const currentMin = tzTime.getMinutes();
