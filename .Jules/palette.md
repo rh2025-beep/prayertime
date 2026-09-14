@@ -1,0 +1,3 @@
+## 2024-05-14 - ARIA Requirements for Modals and Icon-only Buttons
+**Learning:** In this application's custom modals (like Location Search), elements often lack proper accessibility attributes. The `.modal-content` wrapper needs `role="dialog"`, `aria-modal="true"`, and `aria-labelledby`, while icon-only buttons (like the close 'times' button or the search icon button) need explicit `aria-label`s (often available via localization strings like `str.cancel` or `str.searchBtn`) to ensure they are readable by screen readers.
+**Action:** When creating or modifying modals and icon-only buttons, always ensure they are wrapped with dialog roles and have explicit aria-labels pointing to localized strings.
