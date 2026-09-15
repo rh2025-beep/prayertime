@@ -1,0 +1,3 @@
+## 2024-05-15 - tzTime calculation is expensive and happens on every render and tick
+**Learning:** `toLocaleString` is much slower than `Intl.DateTimeFormat`. In a high-frequency interval loop (like the 1-second timer in App.jsx), recreating dates with `toLocaleString` can block the main thread and cause performance issues.
+**Action:** Use `Intl.DateTimeFormat` and memoize the formatter if possible. Be careful when instantiating it dynamically based on variable timezone data; always wrap the instantiation in a `try-catch` block to prevent crashing due to invalid timezone strings, and ensure subsequent formatting calls guard against null formatters.
