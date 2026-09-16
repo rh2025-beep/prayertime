@@ -206,6 +206,26 @@ const getPrayerEndTime = (key, timings) => {
   }
 };
 
+
+// Memoized timezone formatter to prevent recreating Intl.DateTimeFormat on every render
+// This is critical since the clock updates every second, and instantiating DateTimeFormat is slow.
+function useTzFormatter(timezone) {
+  return React.useMemo(() => {
+    if (!timezone) return null;
+    try {
+      return new Intl.DateTimeFormat("en-US", {
+        timeZone: timezone,
+        year: "numeric", month: "numeric", day: "numeric",
+        hour: "numeric", minute: "numeric", second: "numeric",
+        hourCycle: "h23"
+      });
+    } catch (e) {
+      console.warn("Invalid timezone:", timezone);
+      return null;
+    }
+  }, [timezone]);
+}
+
 function App() {
   const [theme, setTheme] = useStickyState('light', 'app-theme');
   const [colorTheme, setColorTheme] = useStickyState('emerald', 'app-color-theme');
@@ -284,6 +304,7 @@ function App() {
     }
   }, []);
   const [metaInfo, setMetaInfo] = useState(null);
+  const tzFormatter = useTzFormatter(metaInfo?.timezone);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   const [activePrayer, setActivePrayer] = useState(null);
@@ -653,13 +674,14 @@ function App() {
   useEffect(() => {
     if (!timings) return;
     
-    const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
-       try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
-       } catch {
-         return currentTime;
-       }
-     })() : currentTime;
+    const tzTime = (() => {
+      if (!tzFormatter) return currentTime;
+      try {
+        return new Date(tzFormatter.format(currentTime));
+      } catch {
+        return currentTime;
+      }
+    })();
 
     const nowMin = tzTime.getHours() * 60 + tzTime.getMinutes();
     const nowSec = tzTime.getSeconds();
@@ -996,13 +1018,14 @@ function App() {
     return `${formatNumber(activeTime.getDate(), lang)} ${getMonthName(activeTime.getMonth(), lang)} ${formatNumber(activeTime.getFullYear(), lang)}`;
   };
 
-const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
-       try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
-       } catch {
-         return currentTime;
-       }
-     })() : currentTime;
+const tzTime = (() => {
+      if (!tzFormatter) return currentTime;
+      try {
+        return new Date(tzFormatter.format(currentTime));
+      } catch {
+        return currentTime;
+      }
+    })();
 
   const currentHour = tzTime.getHours();
   const currentMin = tzTime.getMinutes();
