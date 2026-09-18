@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Settings, Calendar, Clock, MapPin, Sun, Moon, Sunrise, Sunset, CloudSun, Locate, Search, Compass, ChevronDown, ArrowLeft, Info, Maximize, AlertTriangle, RefreshCw, Compass as CompassIcon, Download, Bell, BellOff } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
@@ -207,6 +207,7 @@ const getPrayerEndTime = (key, timings) => {
 };
 
 function App() {
+  const lastWidgetPayloadRef = useRef(null);
   const [theme, setTheme] = useStickyState('light', 'app-theme');
   const [colorTheme, setColorTheme] = useStickyState('emerald', 'app-color-theme');
   const [widgetStyle, setWidgetStyle] = useStickyState('theme', 'app-widget-style');
@@ -820,17 +821,30 @@ function App() {
           timings: timings
         };
 
-        if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PrayerWidget')) {
-          Capacitor.Plugins.PrayerWidget.updateWidget({
-            colorTheme: colorTheme,
-            widgetStyle: widgetStyle,
-            data: widgetPayload
-          }).catch((e) => console.warn("PrayerWidget plugin failed", e));
-        }
+        // ⚡ Bolt Optimization: Dirty-check widget payload to prevent excessive disk/native I/O
+        // 💡 What: Compare stringified payload with last sync before writing.
+        // 🎯 Why: This effect runs ~1 time per second but data usually changes per minute.
+        // 📊 Impact: Saves ~59 unnecessary synchronous writes & IPC calls per minute.
+        // Note: Include colorTheme and widgetStyle in comparison since they are passed independently to the native layer
+        const syncState = { payload: widgetPayload, colorTheme, widgetStyle };
+        const syncStr = JSON.stringify(syncState);
+        const payloadStr = JSON.stringify(widgetPayload);
 
-        localStorage.setItem('widget_data', JSON.stringify(widgetPayload));
-        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
-          window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: JSON.stringify(widgetPayload) });
+        if (lastWidgetPayloadRef.current !== syncStr) {
+          lastWidgetPayloadRef.current = syncStr;
+
+          if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PrayerWidget')) {
+            Capacitor.Plugins.PrayerWidget.updateWidget({
+              colorTheme: colorTheme,
+              widgetStyle: widgetStyle,
+              data: widgetPayload
+            }).catch((e) => console.warn("PrayerWidget plugin failed", e));
+          }
+
+          localStorage.setItem('widget_data', payloadStr);
+          if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
+            window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: payloadStr });
+          }
         }
       } catch (e) {
         console.warn("Widget sync failed", e);
