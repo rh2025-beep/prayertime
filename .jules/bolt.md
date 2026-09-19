@@ -1,0 +1,3 @@
+## 2024-05-24 - Expensive Intl.DateTimeFormat instantiation in interval loops
+**Learning:** In high-frequency React hooks (like the 1s interval clock used in `App.jsx`), repeatedly instantiating `Intl.DateTimeFormat` or calling `toLocaleString` triggers significant performance degradation because it blocks the main thread with formatting instantiation overhead. Sync disk writes (`localStorage.setItem`) in such effects also drag performance down.
+**Action:** Always memoize `Intl.DateTimeFormat` using `useMemo` when its dependencies (like timezone) change. Add a dirty check (using `useRef`) in interval hooks before invoking synchronous disk I/O or Capacitor native calls.
