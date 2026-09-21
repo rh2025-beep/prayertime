@@ -1,0 +1,3 @@
+## 2023-10-27 - Icon Buttons Need ARIA Labels & Searching state missing spinner
+**Learning:** Found multiple icon-only buttons (like Search, Close modal, Location GPS) lacking `aria-label`s. Also, the search button just keeps a static search icon while `isSearching` is true, providing poor interaction feedback.
+**Action:** Add `aria-label` or `title` with localized strings (e.g., `str.searchBtn`, `str.cancel`, "Use GPS") to all standalone icon buttons across the app. Add `aria-label` to the search button and a loading spinner (`<RefreshCw className="spin-icon" size={20} />`) instead of the Search icon when `isSearching` is true.
