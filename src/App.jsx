@@ -1692,9 +1692,12 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                 />
                 <button 
                   onClick={() => handleSearch(searchQuery)}
-                  style={{padding:'0.75rem 1rem', borderRadius:'10px', background:'var(--active-gradient)', color:'white', border:'none', cursor:'pointer'}}
+                  disabled={isSearching}
+                  title={str.searchBtn}
+                  aria-label={str.searchBtn}
+                  style={{padding:'0.75rem 1rem', borderRadius:'10px', background:'var(--active-gradient)', color:'white', border:'none', cursor:isSearching ? 'not-allowed' : 'pointer', opacity: isSearching ? 0.7 : 1}}
                 >
-                  <Search size={20} />
+                  {isSearching ? <RefreshCw className="spin-icon" size={20} /> : <Search size={20} />}
                 </button>
               </div>
 
