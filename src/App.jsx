@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Settings, Calendar, Clock, MapPin, Sun, Moon, Sunrise, Sunset, CloudSun, Locate, Search, Compass, ChevronDown, ArrowLeft, Info, Maximize, AlertTriangle, RefreshCw, Compass as CompassIcon, Download, Bell, BellOff } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
@@ -218,6 +218,7 @@ function App() {
     maghribNotif: true,
     ishaNotif: true
   }, 'app-notif-config');
+  const lastWidgetPayloadRef = useRef(null);
   const [config, setConfig] = useStickyState({
     lat: 23.8103,
     lng: 90.4125,
@@ -820,6 +821,12 @@ function App() {
           timings: timings
         };
 
+        const stringifiedPayload = JSON.stringify(widgetPayload);
+        if (lastWidgetPayloadRef.current === stringifiedPayload) {
+          return;
+        }
+        lastWidgetPayloadRef.current = stringifiedPayload;
+
         if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PrayerWidget')) {
           Capacitor.Plugins.PrayerWidget.updateWidget({
             colorTheme: colorTheme,
@@ -828,9 +835,9 @@ function App() {
           }).catch((e) => console.warn("PrayerWidget plugin failed", e));
         }
 
-        localStorage.setItem('widget_data', JSON.stringify(widgetPayload));
+        localStorage.setItem('widget_data', stringifiedPayload);
         if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
-          window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: JSON.stringify(widgetPayload) });
+          window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: stringifiedPayload });
         }
       } catch (e) {
         console.warn("Widget sync failed", e);
