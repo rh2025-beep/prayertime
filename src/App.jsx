@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Settings, Calendar, Clock, MapPin, Sun, Moon, Sunrise, Sunset, CloudSun, Locate, Search, Compass, ChevronDown, ArrowLeft, Info, Maximize, AlertTriangle, RefreshCw, Compass as CompassIcon, Download, Bell, BellOff } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
@@ -634,6 +634,25 @@ function App() {
     return () => { activeFetch = false; };
   }, [config.lat, config.lng, config.school, fetchDateStr]);
 
+  const dateFormatter = useMemo(() => {
+    if (!metaInfo || !metaInfo.timezone) return null;
+    try {
+      return new Intl.DateTimeFormat('en-US', {
+        timeZone: metaInfo.timezone,
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric',
+        hourCycle: 'h23'
+      });
+    } catch (e) {
+      console.warn("Invalid timezone", e);
+      return null;
+    }
+  }, [metaInfo]);
+
   // 1-second timer to update current time and track day transitions (midnight crossings)
   useEffect(() => {
     const timer = setInterval(() => {
@@ -653,9 +672,9 @@ function App() {
   useEffect(() => {
     if (!timings) return;
     
-    const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
+    const tzTime = dateFormatter ? (() => {
        try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+         return new Date(dateFormatter.format(currentTime));
        } catch {
          return currentTime;
        }
@@ -802,6 +821,8 @@ function App() {
 
   }, [currentTime, timings, prayersList, metaInfo, lang]);
 
+  const lastWidgetDataRef = useRef(null);
+
   // Sync Android Home Screen Widget payload & notify native widget manager immediately
   useEffect(() => {
     if (nextPrayer && timings && prevMilestone) {
@@ -819,6 +840,12 @@ function App() {
           widgetStyle: widgetStyle,
           timings: timings
         };
+
+        const currentWidgetStateStr = JSON.stringify({ widgetPayload, colorTheme, widgetStyle });
+        if (lastWidgetDataRef.current === currentWidgetStateStr) {
+          return;
+        }
+        lastWidgetDataRef.current = currentWidgetStateStr;
 
         if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PrayerWidget')) {
           Capacitor.Plugins.PrayerWidget.updateWidget({
@@ -996,9 +1023,9 @@ function App() {
     return `${formatNumber(activeTime.getDate(), lang)} ${getMonthName(activeTime.getMonth(), lang)} ${formatNumber(activeTime.getFullYear(), lang)}`;
   };
 
-const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
+  const tzTime = dateFormatter ? (() => {
        try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+         return new Date(dateFormatter.format(currentTime));
        } catch {
          return currentTime;
        }
