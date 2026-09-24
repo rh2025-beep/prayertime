@@ -1,0 +1,3 @@
+## 2025-02-14 - Add ARIA attributes to Modals
+**Learning:** The application uses custom modal implementations for full-screen and bottom-sheet views (`.fullscreen-view` and `.modal-content`), which lacked fundamental accessibility attributes (`role="dialog"`, `aria-modal="true"`, and `aria-labelledby`). Screen readers wouldn't announce these as modal dialogs.
+**Action:** Always ensure that custom overlay components have `role="dialog"`, `aria-modal="true"`, and a linked title via `aria-labelledby` to guarantee keyboard and screen reader accessibility. Also, ensure icon-only buttons have localized `aria-label`s.
