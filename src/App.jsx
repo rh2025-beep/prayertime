@@ -650,16 +650,35 @@ function App() {
     return () => clearInterval(timer);
   }, []);
 
+  // ⚡ Bolt: Memoize expensive Intl.DateTimeFormat to prevent main-thread blocking on every tick
+  const tzFormatterRef = React.useRef(null);
+  const tzFormatterCacheKey = React.useRef("");
+
+  const getTzTime = (baseTime) => {
+    if (!metaInfo || !metaInfo.timezone) return baseTime;
+    try {
+      if (tzFormatterCacheKey.current !== metaInfo.timezone || !tzFormatterRef.current) {
+        tzFormatterRef.current = new Intl.DateTimeFormat("en-US", {
+          timeZone: metaInfo.timezone,
+          year: "numeric", month: "numeric", day: "numeric",
+          hour: "numeric", minute: "numeric", second: "numeric",
+          hourCycle: "h23"
+        });
+        tzFormatterCacheKey.current = metaInfo.timezone;
+      }
+      const parts = tzFormatterRef.current.formatToParts(baseTime);
+      const tzVals = {};
+      parts.forEach(({ type, value }) => { tzVals[type] = value; });
+      return new Date(tzVals.year, tzVals.month - 1, tzVals.day, tzVals.hour, tzVals.minute, tzVals.second);
+    } catch {
+      return baseTime;
+    }
+  };
+
   useEffect(() => {
     if (!timings) return;
     
-    const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
-       try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
-       } catch {
-         return currentTime;
-       }
-     })() : currentTime;
+    const tzTime = getTzTime(currentTime);
 
     const nowMin = tzTime.getHours() * 60 + tzTime.getMinutes();
     const nowSec = tzTime.getSeconds();
@@ -803,6 +822,9 @@ function App() {
   }, [currentTime, timings, prayersList, metaInfo, lang]);
 
   // Sync Android Home Screen Widget payload & notify native widget manager immediately
+  // ⚡ Bolt: Dirty-check widget payload to prevent synchronous disk I/O and bridge calls on every tick
+  const widgetSyncRef = React.useRef("");
+
   useEffect(() => {
     if (nextPrayer && timings && prevMilestone) {
       try {
@@ -820,6 +842,10 @@ function App() {
           timings: timings
         };
 
+        const currentPayloadStr = JSON.stringify({ widgetPayload, colorTheme, widgetStyle });
+        if (widgetSyncRef.current === currentPayloadStr) return;
+        widgetSyncRef.current = currentPayloadStr;
+
         if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PrayerWidget')) {
           Capacitor.Plugins.PrayerWidget.updateWidget({
             colorTheme: colorTheme,
@@ -828,9 +854,9 @@ function App() {
           }).catch((e) => console.warn("PrayerWidget plugin failed", e));
         }
 
-        localStorage.setItem('widget_data', JSON.stringify(widgetPayload));
+        localStorage.setItem('widget_data', currentPayloadStr);
         if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
-          window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: JSON.stringify(widgetPayload) });
+          window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: currentPayloadStr });
         }
       } catch (e) {
         console.warn("Widget sync failed", e);
@@ -996,13 +1022,7 @@ function App() {
     return `${formatNumber(activeTime.getDate(), lang)} ${getMonthName(activeTime.getMonth(), lang)} ${formatNumber(activeTime.getFullYear(), lang)}`;
   };
 
-const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
-       try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
-       } catch {
-         return currentTime;
-       }
-     })() : currentTime;
+  const tzTime = getTzTime(currentTime);
 
   const currentHour = tzTime.getHours();
   const currentMin = tzTime.getMinutes();
