@@ -1678,7 +1678,7 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
               <div className="sheet-drag-handle" />
               <div className="modal-header" style={{marginBottom: '1rem'}}>
                 <span className="modal-title">{str.searchLoc}</span>
-                <button className="close-btn" onClick={closeSearch}>&times;</button>
+                <button className="close-btn" onClick={closeSearch} aria-label={str.cancel}>&times;</button>
               </div>
               
               <div style={{display:'flex', gap:'0.5rem', marginBottom:'1rem'}}>
@@ -1688,13 +1688,23 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={str.searchCity}
                   style={{flex:1, padding:'0.75rem', borderRadius:'10px', border:'1px solid var(--border-color)', background:'var(--bg-main)', color:'var(--text-main)', fontSize:'1rem'}}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch(searchQuery)}
+                  onKeyDown={(e) => e.key === 'Enter' && !isSearching && handleSearch(searchQuery)}
                 />
                 <button 
                   onClick={() => handleSearch(searchQuery)}
-                  style={{padding:'0.75rem 1rem', borderRadius:'10px', background:'var(--active-gradient)', color:'white', border:'none', cursor:'pointer'}}
+                  disabled={isSearching}
+                  aria-label={str.searchBtn}
+                  style={{
+                    padding:'0.75rem 1rem',
+                    borderRadius:'10px',
+                    background:'var(--active-gradient)',
+                    color:'white',
+                    border:'none',
+                    cursor: isSearching ? 'not-allowed' : 'pointer',
+                    opacity: isSearching ? 0.7 : 1
+                  }}
                 >
-                  <Search size={20} />
+                  {isSearching ? <RefreshCw size={20} className="spin-icon" /> : <Search size={20} />}
                 </button>
               </div>
 
