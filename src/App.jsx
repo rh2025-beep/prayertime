@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import { Settings, Calendar, Clock, MapPin, Sun, Moon, Sunrise, Sunset, CloudSun, Locate, Search, Compass, ChevronDown, ArrowLeft, Info, Maximize, AlertTriangle, RefreshCw, Compass as CompassIcon, Download, Bell, BellOff } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
@@ -293,6 +293,7 @@ function App() {
   const [progressPercent, setProgressPercent] = useState(0);
 
   const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const lastWidgetDataRef = useRef(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
 
   const [fetchDateStr, setFetchDateStr] = useState(new Date().toDateString());
@@ -819,6 +820,16 @@ function App() {
           widgetStyle: widgetStyle,
           timings: timings
         };
+
+        // ⚡ Bolt Optimization: Prevent redundant native calls and disk I/O.
+        // The payload only actually changes once a minute when the minute countdown ticks,
+        // but this effect runs every second due to timeLeft dependency.
+        // Reduces main thread blocking operations by ~98% (60 calls/min down to 1).
+        const currentDataStr = JSON.stringify({ widgetPayload, colorTheme, widgetStyle });
+        if (lastWidgetDataRef.current === currentDataStr) {
+          return;
+        }
+        lastWidgetDataRef.current = currentDataStr;
 
         if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PrayerWidget')) {
           Capacitor.Plugins.PrayerWidget.updateWidget({
