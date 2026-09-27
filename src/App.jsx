@@ -1674,11 +1674,11 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
         {/* LOCATION SEARCH MODAL */}
         {isSearchOpen && (
           <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeSearch(); }}>
-            <div className="modal-content">
+            <div className="modal-content" role="dialog" aria-modal="true" aria-labelledby="search-modal-title">
               <div className="sheet-drag-handle" />
               <div className="modal-header" style={{marginBottom: '1rem'}}>
-                <span className="modal-title">{str.searchLoc}</span>
-                <button className="close-btn" onClick={closeSearch}>&times;</button>
+                <span className="modal-title" id="search-modal-title">{str.searchLoc}</span>
+                <button className="close-btn" onClick={closeSearch} aria-label={str.cancel} title={str.cancel}>&times;</button>
               </div>
               
               <div style={{display:'flex', gap:'0.5rem', marginBottom:'1rem'}}>
