@@ -30,7 +30,37 @@ function useStickyState(defaultValue, key) {
   return [value, setValue];
 }
 
+
 // --- Constants & Translations ---
+const tzFormatters = new Map();
+
+const getTzDate = (date, timezone) => {
+  if (!timezone) return date;
+
+  if (!tzFormatters.has(timezone)) {
+    try {
+      const formatter = new Intl.DateTimeFormat("en-US", {
+        timeZone: timezone,
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric',
+        hourCycle: 'h23'
+      });
+      tzFormatters.set(timezone, formatter);
+    } catch (err) {
+      tzFormatters.set(timezone, null);
+    }
+  }
+
+  const formatter = tzFormatters.get(timezone);
+  if (!formatter) return date;
+
+  return new Date(formatter.format(date));
+};
+
 const PRAYERS = {
   bn: [
     { key: "Fajr", name: "ফজর", icon: <Sun size={24} /> },
@@ -653,13 +683,7 @@ function App() {
   useEffect(() => {
     if (!timings) return;
     
-    const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
-       try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
-       } catch {
-         return currentTime;
-       }
-     })() : currentTime;
+    const tzTime = (metaInfo && metaInfo.timezone) ? getTzDate(currentTime, metaInfo.timezone) : currentTime;
 
     const nowMin = tzTime.getHours() * 60 + tzTime.getMinutes();
     const nowSec = tzTime.getSeconds();
@@ -803,6 +827,8 @@ function App() {
   }, [currentTime, timings, prayersList, metaInfo, lang]);
 
   // Sync Android Home Screen Widget payload & notify native widget manager immediately
+  const lastWidgetSyncState = React.useRef('');
+
   useEffect(() => {
     if (nextPrayer && timings && prevMilestone) {
       try {
@@ -819,6 +845,12 @@ function App() {
           widgetStyle: widgetStyle,
           timings: timings
         };
+
+        const currentSyncState = JSON.stringify({ widgetPayload, colorTheme, widgetStyle });
+        if (currentSyncState === lastWidgetSyncState.current) {
+          return;
+        }
+        lastWidgetSyncState.current = currentSyncState;
 
         if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PrayerWidget')) {
           Capacitor.Plugins.PrayerWidget.updateWidget({
@@ -996,13 +1028,7 @@ function App() {
     return `${formatNumber(activeTime.getDate(), lang)} ${getMonthName(activeTime.getMonth(), lang)} ${formatNumber(activeTime.getFullYear(), lang)}`;
   };
 
-const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
-       try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
-       } catch {
-         return currentTime;
-       }
-     })() : currentTime;
+const tzTime = (metaInfo && metaInfo.timezone) ? getTzDate(currentTime, metaInfo.timezone) : currentTime;
 
   const currentHour = tzTime.getHours();
   const currentMin = tzTime.getMinutes();
