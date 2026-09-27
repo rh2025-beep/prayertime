@@ -1,0 +1,3 @@
+## 2024-05-18 - Expensive Timezone Instantiation in Render Loop
+**Learning:** In React components that update frequently (e.g. 1-second timers), instantiating `Intl.DateTimeFormat` dynamically inside `toLocaleString` based on variable timezone data is incredibly expensive and blocks the main thread.
+**Action:** Always wrap `Intl.DateTimeFormat` instantiations in a `try-catch` and memoize them in high-frequency loops. Avoid setting `hour12: false` when parsing the result with `new Date()`, as it triggers the `h24` cycle (midnight = `24:xx`), which fails to parse. Use `hourCycle: 'h23'` instead.
