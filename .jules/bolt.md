@@ -1,0 +1,3 @@
+## 2024-10-27 - Optimizing Timezone Formatting in Interval Loops
+**Learning:** `currentTime.toLocaleString` is very slow when used dynamically with `timeZone` inside a high-frequency interval (e.g. 1-second ticks). Instantiating `Intl.DateTimeFormat` dynamically inside a render cycle or high-frequency effect block causes excessive allocations and blocking of the main thread.
+**Action:** Memoize the `Intl.DateTimeFormat` instance using `useMemo` so it's only created when the timezone actually changes. Use this single format instance to generate the formatted date string instead of `toLocaleString`. Ensure you catch errors if the timezone string is invalid and handle it gracefully.
