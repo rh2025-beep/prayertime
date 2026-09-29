@@ -1,0 +1,3 @@
+## 2024-05-18 - Improve Search Button UX & Accessibility
+**Learning:** The location search button lacks visual feedback during search operations, making the interface feel unresponsive during async network calls. Additionally, the search button is missing an `aria-label` despite only having an icon inside it.
+**Action:** Replace the static search icon with a spinning `RefreshCw` icon when `isSearching` is true, using the existing `.spin-icon` CSS class. Add `aria-label={str.searchBtn}` to the button to ensure it's readable by screen readers. Disable the button while searching to prevent duplicate requests.
