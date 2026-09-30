@@ -1674,11 +1674,11 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
         {/* LOCATION SEARCH MODAL */}
         {isSearchOpen && (
           <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeSearch(); }}>
-            <div className="modal-content">
+            <div className="modal-content" role="dialog" aria-modal="true" aria-labelledby="search-modal-title">
               <div className="sheet-drag-handle" />
               <div className="modal-header" style={{marginBottom: '1rem'}}>
-                <span className="modal-title">{str.searchLoc}</span>
-                <button className="close-btn" onClick={closeSearch}>&times;</button>
+                <span id="search-modal-title" className="modal-title">{str.searchLoc}</span>
+                <button className="close-btn" onClick={closeSearch} aria-label={str.cancel}>&times;</button>
               </div>
               
               <div style={{display:'flex', gap:'0.5rem', marginBottom:'1rem'}}>
@@ -1692,14 +1692,19 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                 />
                 <button 
                   onClick={() => handleSearch(searchQuery)}
+                  disabled={isSearching}
+                  aria-label={str.searchBtn}
                   style={{padding:'0.75rem 1rem', borderRadius:'10px', background:'var(--active-gradient)', color:'white', border:'none', cursor:'pointer'}}
                 >
-                  <Search size={20} />
+                  {isSearching ? <RefreshCw size={20} className="spin-icon" /> : <Search size={20} />}
                 </button>
               </div>
 
               {isSearching ? (
-                <div style={{textAlign:'center', padding:'2rem', color:'var(--text-muted)'}}>{str.searching}</div>
+                <div style={{display:'flex', justifyContent:'center', alignItems:'center', gap:'0.5rem', padding:'2rem', color:'var(--text-muted)'}}>
+                  <RefreshCw size={20} className="spin-icon" />
+                  <span>{str.searching}</span>
+                </div>
               ) : (
                 <div style={{display:'flex', flexDirection:'column', gap:'0.5rem'}}>
                   {searchResults.map((item, idx) => (
