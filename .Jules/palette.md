@@ -1,0 +1,3 @@
+## 2024-05-18 - Custom Modal Accessibility & Loading States
+**Learning:** Custom modals (like `.modal-content`) require explicit `role="dialog"` and `aria-modal="true"` to be properly recognized by screen readers. Additionally, icon-only buttons need `aria-label`s, and search forms benefit significantly from visual loading states (`isSearching`) to provide feedback during async operations.
+**Action:** Always verify `role="dialog"` and `aria-modal="true"` on custom modals, ensure all icon-only buttons have localized `aria-label`s, and implement `.spin-icon` feedback for async actions in this codebase.
