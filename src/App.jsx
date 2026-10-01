@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Settings, Calendar, Clock, MapPin, Sun, Moon, Sunrise, Sunset, CloudSun, Locate, Search, Compass, ChevronDown, ArrowLeft, Info, Maximize, AlertTriangle, RefreshCw, Compass as CompassIcon, Download, Bell, BellOff } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
@@ -298,6 +298,11 @@ function App() {
   const [fetchDateStr, setFetchDateStr] = useState(new Date().toDateString());
   const [apiError, setApiError] = useState(null);
   const [isScreensaverActive, setIsScreensaverActive] = useState(false);
+
+  // Performance optimization refs
+  const tzFormatterRef = useRef(null);
+  const currentTzRef = useRef(null);
+  const lastWidgetPayloadStrRef = useRef(null);
 
   // Listen for Android launcher app shortcut intents (e.g. Qibla Compass, Settings)
   useEffect(() => {
@@ -655,7 +660,20 @@ function App() {
     
     const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
        try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+         if (currentTzRef.current !== metaInfo.timezone || !tzFormatterRef.current) {
+           currentTzRef.current = metaInfo.timezone;
+           tzFormatterRef.current = new Intl.DateTimeFormat('en-US', {
+             timeZone: metaInfo.timezone,
+             year: 'numeric',
+             month: '2-digit',
+             day: '2-digit',
+             hour: '2-digit',
+             minute: '2-digit',
+             second: '2-digit',
+             hourCycle: 'h23'
+           });
+         }
+         return new Date(tzFormatterRef.current.format(currentTime));
        } catch {
          return currentTime;
        }
@@ -819,6 +837,12 @@ function App() {
           widgetStyle: widgetStyle,
           timings: timings
         };
+
+        const payloadStr = JSON.stringify(widgetPayload);
+        if (lastWidgetPayloadStrRef.current === payloadStr) {
+          return; // Skip native bridge and I/O if payload is unchanged
+        }
+        lastWidgetPayloadStrRef.current = payloadStr;
 
         if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PrayerWidget')) {
           Capacitor.Plugins.PrayerWidget.updateWidget({
