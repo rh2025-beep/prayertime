@@ -1,0 +1,3 @@
+## 2024-05-20 - Memoizing High-Frequency Date Formatting & Derived State I/O Check
+**Learning:** High-frequency interval loops (e.g., 1-second timers) invoking `toLocaleString` or `Intl.DateTimeFormat` without memoization block the main thread unnecessarily. Furthermore, synchronizing derived state to disk or native plugins on every tick is wasteful.
+**Action:** Memoize `Intl.DateTimeFormat` instances across ticks. Implement a dirty-check (using `useRef` and `JSON.stringify`) for properties like `localStorage.setItem('widget_data', ...)` so updates are only written when string values actually change.
