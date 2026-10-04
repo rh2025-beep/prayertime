@@ -1,0 +1,3 @@
+## YYYY-MM-DD - Add ARIA attributes to Modals and Icon Buttons
+**Learning:** The application frequently uses custom modals (e.g., Location Search) and icon-only buttons (like the search submission button) that lack basic structural ARIA attributes. Screen readers cannot properly identify the overlay as a modal dialogue without `role="dialog"`, `aria-modal="true"`, and `aria-labelledby`. Similarly, buttons lacking text or `aria-label`s provide no context.
+**Action:** When working on modals in this application, strictly verify the presence of `role="dialog"` and `aria-modal="true"` on the primary overlay content container. Ensure any icon-only buttons are provided an `aria-label` utilizing the application's localization strings (e.g., `str.cancel`, `str.searchLoc`).

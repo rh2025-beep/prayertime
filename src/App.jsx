@@ -1674,16 +1674,17 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
         {/* LOCATION SEARCH MODAL */}
         {isSearchOpen && (
           <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) closeSearch(); }}>
-            <div className="modal-content">
+            <div className="modal-content" role="dialog" aria-modal="true" aria-labelledby="search-modal-title">
               <div className="sheet-drag-handle" />
               <div className="modal-header" style={{marginBottom: '1rem'}}>
-                <span className="modal-title">{str.searchLoc}</span>
-                <button className="close-btn" onClick={closeSearch}>&times;</button>
+                <span id="search-modal-title" className="modal-title">{str.searchLoc}</span>
+                <button className="close-btn" onClick={closeSearch} aria-label={str.cancel}>&times;</button>
               </div>
               
               <div style={{display:'flex', gap:'0.5rem', marginBottom:'1rem'}}>
                 <input 
                   type="text" 
+                  aria-label={str.searchLoc}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={str.searchCity}
@@ -1691,6 +1692,7 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch(searchQuery)}
                 />
                 <button 
+                  aria-label={str.searchLoc}
                   onClick={() => handleSearch(searchQuery)}
                   style={{padding:'0.75rem 1rem', borderRadius:'10px', background:'var(--active-gradient)', color:'white', border:'none', cursor:'pointer'}}
                 >
