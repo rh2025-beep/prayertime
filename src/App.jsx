@@ -286,6 +286,25 @@ function App() {
   const [metaInfo, setMetaInfo] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
 
+  const tzFormatter = React.useMemo(() => {
+    if (!metaInfo || !metaInfo.timezone) return null;
+    try {
+      return new Intl.DateTimeFormat('en-US', {
+        timeZone: metaInfo.timezone,
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric',
+        hourCycle: 'h23'
+      });
+    } catch (e) {
+      console.warn("Invalid timezone for formatter:", metaInfo.timezone, e);
+      return null;
+    }
+  }, [metaInfo?.timezone]);
+
   const [activePrayer, setActivePrayer] = useState(null);
   const [nextPrayer, setNextPrayer] = useState(null);
   const [prevMilestone, setPrevMilestone] = useState(null);
@@ -653,9 +672,9 @@ function App() {
   useEffect(() => {
     if (!timings) return;
     
-    const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
+    const tzTime = (metaInfo && metaInfo.timezone && tzFormatter) ? (() => {
        try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+         return new Date(tzFormatter.format(currentTime));
        } catch {
          return currentTime;
        }
@@ -996,9 +1015,9 @@ function App() {
     return `${formatNumber(activeTime.getDate(), lang)} ${getMonthName(activeTime.getMonth(), lang)} ${formatNumber(activeTime.getFullYear(), lang)}`;
   };
 
-const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
+const tzTime = (metaInfo && metaInfo.timezone && tzFormatter) ? (() => {
        try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+         return new Date(tzFormatter.format(currentTime));
        } catch {
          return currentTime;
        }
