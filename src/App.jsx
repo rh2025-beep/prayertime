@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Settings, Calendar, Clock, MapPin, Sun, Moon, Sunrise, Sunset, CloudSun, Locate, Search, Compass, ChevronDown, ArrowLeft, Info, Maximize, AlertTriangle, RefreshCw, Compass as CompassIcon, Download, Bell, BellOff } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
@@ -284,6 +284,25 @@ function App() {
     }
   }, []);
   const [metaInfo, setMetaInfo] = useState(null);
+
+  const tzFormatter = useMemo(() => {
+    if (!metaInfo || !metaInfo.timezone) return null;
+    try {
+      return new Intl.DateTimeFormat("en-US", {
+        timeZone: metaInfo.timezone,
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric',
+        hourCycle: 'h23'
+      });
+    } catch {
+      return null;
+    }
+  }, [metaInfo]);
+
   const [currentTime, setCurrentTime] = useState(new Date());
 
   const [activePrayer, setActivePrayer] = useState(null);
@@ -653,9 +672,12 @@ function App() {
   useEffect(() => {
     if (!timings) return;
     
-    const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
+    const tzTime = tzFormatter ? (() => {
        try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+         const parts = tzFormatter.formatToParts(currentTime);
+         let obj = {};
+         for (let p of parts) { obj[p.type] = p.value; }
+         return new Date(obj.year, obj.month - 1, obj.day, obj.hour, obj.minute, obj.second);
        } catch {
          return currentTime;
        }
@@ -996,9 +1018,12 @@ function App() {
     return `${formatNumber(activeTime.getDate(), lang)} ${getMonthName(activeTime.getMonth(), lang)} ${formatNumber(activeTime.getFullYear(), lang)}`;
   };
 
-const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
+const tzTime = tzFormatter ? (() => {
        try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+         const parts = tzFormatter.formatToParts(currentTime);
+         let obj = {};
+         for (let p of parts) { obj[p.type] = p.value; }
+         return new Date(obj.year, obj.month - 1, obj.day, obj.hour, obj.minute, obj.second);
        } catch {
          return currentTime;
        }
