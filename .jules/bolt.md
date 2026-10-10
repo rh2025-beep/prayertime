@@ -1,0 +1,3 @@
+## YYYY-MM-DD - Widget Sync Dirty Checking
+**Learning:** High-frequency React effects that depend on variables changing every second (like countdown timer values) trigger expensive synchronous operations (like `localStorage.setItem` and native Capacitor plugin calls) excessively if not properly memoized or dirty-checked, leading to significant overhead and potential thread blocking.
+**Action:** Implement `useRef` based dirty-checking for complex payloads that are passed to synchronous disk I/O or native plugins, ensuring the expensive operations only run when the actual derived state changes, rather than on every tick. Include independent state variables like `colorTheme` and `widgetStyle` in the comparison.
