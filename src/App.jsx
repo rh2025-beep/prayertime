@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Settings, Calendar, Clock, MapPin, Sun, Moon, Sunrise, Sunset, CloudSun, Locate, Search, Compass, ChevronDown, ArrowLeft, Info, Maximize, AlertTriangle, RefreshCw, Compass as CompassIcon, Download, Bell, BellOff } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
@@ -207,6 +207,7 @@ const getPrayerEndTime = (key, timings) => {
 };
 
 function App() {
+  const lastWidgetSyncRef = useRef(null);
   const [theme, setTheme] = useStickyState('light', 'app-theme');
   const [colorTheme, setColorTheme] = useStickyState('emerald', 'app-color-theme');
   const [widgetStyle, setWidgetStyle] = useStickyState('theme', 'app-widget-style');
@@ -820,17 +821,23 @@ function App() {
           timings: timings
         };
 
-        if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PrayerWidget')) {
-          Capacitor.Plugins.PrayerWidget.updateWidget({
-            colorTheme: colorTheme,
-            widgetStyle: widgetStyle,
-            data: widgetPayload
-          }).catch((e) => console.warn("PrayerWidget plugin failed", e));
-        }
+        const serializedString = JSON.stringify({ payload: widgetPayload, colorTheme, widgetStyle });
 
-        localStorage.setItem('widget_data', JSON.stringify(widgetPayload));
-        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
-          window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: JSON.stringify(widgetPayload) });
+        if (lastWidgetSyncRef.current !== serializedString) {
+          if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PrayerWidget')) {
+            Capacitor.Plugins.PrayerWidget.updateWidget({
+              colorTheme: colorTheme,
+              widgetStyle: widgetStyle,
+              data: widgetPayload
+            }).catch((e) => console.warn("PrayerWidget plugin failed", e));
+          }
+
+          localStorage.setItem('widget_data', JSON.stringify(widgetPayload));
+          if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Preferences) {
+            window.Capacitor.Plugins.Preferences.set({ key: 'widget_data', value: JSON.stringify(widgetPayload) });
+          }
+
+          lastWidgetSyncRef.current = serializedString;
         }
       } catch (e) {
         console.warn("Widget sync failed", e);
