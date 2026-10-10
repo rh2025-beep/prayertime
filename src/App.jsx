@@ -234,6 +234,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
 
   const [timings, setTimings] = useState(() => {
     try {
@@ -909,6 +910,7 @@ function App() {
   const detectLocation = () => {
     if (!navigator.geolocation) return alert(str.locationError);
     
+    setIsLocating(true);
     navigator.geolocation.getCurrentPosition(async (pos) => {
       const { latitude, longitude } = pos.coords;
       try {
@@ -922,10 +924,15 @@ function App() {
           city: data.locality || data.city || 'Local',
           country: data.countryName || 'GPS Location'
         }));
+        setIsLocating(false);
       } catch {
         setConfig(c => ({...c, lat: latitude, lng: longitude, city: 'GPS Location', country: ''}));
+        setIsLocating(false);
       }
-    }, () => alert(str.locationError));
+    }, () => {
+      alert(str.locationError);
+      setIsLocating(false);
+    });
   };
 
   const handleSearch = async (query) => {
@@ -1065,8 +1072,8 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
               </div>
               <span className="location-country" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '500' }}>{config.country || (lang === 'bn' ? "আপনার অবস্থান" : "Your Location")}</span>
             </div>
-            <button onClick={(e) => { e.stopPropagation(); detectLocation(); }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', marginLeft: 'auto', display: 'flex', padding: '6px' }} title="Use GPS" aria-label="Use GPS">
-              <Locate size={20} />
+            <button disabled={isLocating} onClick={(e) => { e.stopPropagation(); detectLocation(); }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: isLocating ? 'not-allowed' : 'pointer', marginLeft: 'auto', display: 'flex', padding: '6px', opacity: isLocating ? 0.7 : 1 }} title="Use GPS" aria-label="Use GPS">
+              {isLocating ? <RefreshCw size={20} className="spin-icon" /> : <Locate size={20} />}
             </button>
           </div>
         </div>
@@ -1751,8 +1758,8 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                     </span>
                   </div>
                 </div>
-                <button onClick={(e) => { e.stopPropagation(); detectLocation(); }} style={{ background: 'rgba(22, 101, 52, 0.08)', border: 'none', color: 'var(--primary-green)', cursor: 'pointer', display: 'flex', padding: '8px', borderRadius: '50%' }} title="Use GPS">
-                  <Locate size={20} />
+                <button disabled={isLocating} onClick={(e) => { e.stopPropagation(); detectLocation(); }} style={{ background: 'rgba(22, 101, 52, 0.08)', border: 'none', color: 'var(--primary-green)', cursor: isLocating ? 'not-allowed' : 'pointer', display: 'flex', padding: '8px', borderRadius: '50%', opacity: isLocating ? 0.7 : 1 }} title="Use GPS" aria-label="Use GPS">
+                  {isLocating ? <RefreshCw size={20} className="spin-icon" /> : <Locate size={20} />}
                 </button>
               </div>
 
