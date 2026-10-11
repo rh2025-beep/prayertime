@@ -1,0 +1,3 @@
+## YYYY-MM-DD - Missing Accessibility Attributes in Modals and Fullscreen Views
+**Learning:** React portals or conditional rendering are used for modal (`.modal-content`) and fullscreen views (`.fullscreen-view`) like Settings, Search, and Qibla Compass. However, these lack proper ARIA attributes to indicate they are dialogs, which degrades the experience for screen reader users as they are not explicitly informed they've entered a dialog context.
+**Action:** Always ensure `role="dialog"`, `aria-modal="true"`, and appropriate `aria-labelledby` or `aria-label` attributes are present when adding or modifying conditional overlay/fullscreen components.
