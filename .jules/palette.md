@@ -1,0 +1,3 @@
+## YYYY-MM-DD - [Add Loading States to Async Buttons]
+**Learning:** [It was noticed that the GPS location button in `App.jsx` triggers an asynchronous geolocation API call (`detectLocation`), but provided no visual feedback or disabled state during the process. Users might spam the button not realizing it's working.]
+**Action:** [Always add loading states (such as spinners) and disable functionality on buttons when an asynchronous operation is in progress to improve feedback and prevent redundant API calls. The `spin-icon` CSS class and the `lucide-react` `RefreshCw` icon should be used for this context.]
