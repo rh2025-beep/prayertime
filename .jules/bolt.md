@@ -1,0 +1,3 @@
+## YYYY-MM-DD - Optimize widget sync to prevent excessive disk I/O
+**Learning:** In high-frequency interval loops (e.g., 1-second timer), dependencies like `timeLeft` change every second, triggering effects that perform synchronous disk I/O (`localStorage.setItem`) and Capacitor native calls, even if the resulting formatted data (like rounded minutes) hasn't changed.
+**Action:** Always dirty-check the derived payload string (including independent state variables like `colorTheme` and `widgetStyle`) using `useRef` to drastically reduce redundant operations from once-per-second to once-per-minute.
