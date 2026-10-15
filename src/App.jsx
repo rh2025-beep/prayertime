@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Settings, Calendar, Clock, MapPin, Sun, Moon, Sunrise, Sunset, CloudSun, Locate, Search, Compass, ChevronDown, ArrowLeft, Info, Maximize, AlertTriangle, RefreshCw, Compass as CompassIcon, Download, Bell, BellOff } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
@@ -208,6 +208,7 @@ const getPrayerEndTime = (key, timings) => {
 
 function App() {
   const [theme, setTheme] = useStickyState('light', 'app-theme');
+  const lastWidgetPayload = useRef(null);
   const [colorTheme, setColorTheme] = useStickyState('emerald', 'app-color-theme');
   const [widgetStyle, setWidgetStyle] = useStickyState('theme', 'app-widget-style');
   const [notifConfig, setNotifConfig] = useStickyState({
@@ -819,6 +820,13 @@ function App() {
           widgetStyle: widgetStyle,
           timings: timings
         };
+
+        // ⚡ Bolt Optimization: Prevent main thread blocking and jank
+        // Dirty-check the widget payload string to avoid redundant and expensive
+        // synchronous disk I/O (localStorage) and Capacitor Native bridge calls every second.
+        const payloadString = JSON.stringify(widgetPayload);
+        if (lastWidgetPayload.current === payloadString) return;
+        lastWidgetPayload.current = payloadString;
 
         if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PrayerWidget')) {
           Capacitor.Plugins.PrayerWidget.updateWidget({
