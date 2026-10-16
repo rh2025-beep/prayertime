@@ -1,0 +1,3 @@
+## YYYY-MM-DD - Enhance Location Search Modal Accessibility
+**Learning:** Modal components and icon-only buttons (like the search and close buttons) frequently lack proper ARIA roles (`dialog`, `aria-modal`) and labels. Async operations triggered by buttons (like location search) need visual loading feedback and disabled states to prevent multiple submissions and communicate system status to screen readers.
+**Action:** Add `role="dialog"`, `aria-modal="true"`, `aria-labelledby`, and `aria-label`s to modals and icon-only buttons. Add loading spinners (`.spin-icon` using `lucide-react`) and `disabled` states to buttons triggering async network requests.
