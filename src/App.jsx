@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Settings, Calendar, Clock, MapPin, Sun, Moon, Sunrise, Sunset, CloudSun, Locate, Search, Compass, ChevronDown, ArrowLeft, Info, Maximize, AlertTriangle, RefreshCw, Compass as CompassIcon, Download, Bell, BellOff } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
@@ -298,6 +298,28 @@ function App() {
   const [fetchDateStr, setFetchDateStr] = useState(new Date().toDateString());
   const [apiError, setApiError] = useState(null);
   const [isScreensaverActive, setIsScreensaverActive] = useState(false);
+
+  const lastWidgetStateRef = useRef(null);
+
+  const tzFormatter = useMemo(() => {
+    if (metaInfo && metaInfo.timezone) {
+      try {
+        return new Intl.DateTimeFormat("en-US", {
+          timeZone: metaInfo.timezone,
+          year: 'numeric',
+          month: 'numeric',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: 'numeric',
+          second: 'numeric',
+          hourCycle: 'h23'
+        });
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  }, [metaInfo]);
 
   // Listen for Android launcher app shortcut intents (e.g. Qibla Compass, Settings)
   useEffect(() => {
@@ -653,9 +675,9 @@ function App() {
   useEffect(() => {
     if (!timings) return;
     
-    const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
+    const tzTime = (tzFormatter) ? (() => {
        try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+         return new Date(tzFormatter.format(currentTime));
        } catch {
          return currentTime;
        }
@@ -819,6 +841,16 @@ function App() {
           widgetStyle: widgetStyle,
           timings: timings
         };
+
+        const currentWidgetState = JSON.stringify({
+          colorTheme,
+          widgetStyle,
+          data: widgetPayload
+        });
+        if (lastWidgetStateRef.current === currentWidgetState) {
+          return;
+        }
+        lastWidgetStateRef.current = currentWidgetState;
 
         if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PrayerWidget')) {
           Capacitor.Plugins.PrayerWidget.updateWidget({
@@ -996,9 +1028,9 @@ function App() {
     return `${formatNumber(activeTime.getDate(), lang)} ${getMonthName(activeTime.getMonth(), lang)} ${formatNumber(activeTime.getFullYear(), lang)}`;
   };
 
-const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
+const tzTime = (tzFormatter) ? (() => {
        try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+         return new Date(tzFormatter.format(currentTime));
        } catch {
          return currentTime;
        }
