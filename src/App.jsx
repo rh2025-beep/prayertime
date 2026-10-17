@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Settings, Calendar, Clock, MapPin, Sun, Moon, Sunrise, Sunset, CloudSun, Locate, Search, Compass, ChevronDown, ArrowLeft, Info, Maximize, AlertTriangle, RefreshCw, Compass as CompassIcon, Download, Bell, BellOff } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
@@ -285,6 +285,27 @@ function App() {
   }, []);
   const [metaInfo, setMetaInfo] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Memoize the expensive Intl.DateTimeFormat instantiation to prevent blocking the main thread
+  // during the 1-second high-frequency timer loop.
+  const tzFormatter = useMemo(() => {
+    if (!metaInfo || !metaInfo.timezone) return null;
+    try {
+      return new Intl.DateTimeFormat('en-US', {
+        timeZone: metaInfo.timezone,
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric',
+        hourCycle: 'h23'
+      });
+    } catch (e) {
+      console.warn("Invalid timezone", e);
+      return null;
+    }
+  }, [metaInfo]);
 
   const [activePrayer, setActivePrayer] = useState(null);
   const [nextPrayer, setNextPrayer] = useState(null);
@@ -653,9 +674,9 @@ function App() {
   useEffect(() => {
     if (!timings) return;
     
-    const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
+    const tzTime = tzFormatter ? (() => {
        try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+         return new Date(tzFormatter.format(currentTime));
        } catch {
          return currentTime;
        }
@@ -802,19 +823,42 @@ function App() {
 
   }, [currentTime, timings, prayersList, metaInfo, lang]);
 
+  const lastWidgetSyncRef = useRef(null);
+
   // Sync Android Home Screen Widget payload & notify native widget manager immediately
   useEffect(() => {
     if (nextPrayer && timings && prevMilestone) {
       try {
         const startLabelStr = `${prevMilestone.name} ${formatTime(prevMilestone.time, lang)}`;
         const endLabelStr = `${nextPrayer.name} ${formatTime(timings[nextPrayer.key], lang)}`;
+        const countdownStr = `${formatTimeDiff(timeLeft, lang)} ${lang === 'bn' ? 'বাকি' : 'left'}`;
+        const currentProgress = Math.min(100, Math.max(0, Math.round(progressPercent)));
+
+        // Dirty-checking to prevent synchronous disk I/O and Capacitor native calls every second.
+        // We only sync when visually impactful state changes (e.g. minute drops, progress rounding).
+        const syncState = JSON.stringify({
+          nextPrayerName: nextPrayer.name,
+          nextPrayerTime: timings[nextPrayer.key],
+          countdown: countdownStr,
+          startLabel: startLabelStr,
+          endLabel: endLabelStr,
+          progress: currentProgress,
+          colorTheme: colorTheme,
+          widgetStyle: widgetStyle
+        });
+
+        if (lastWidgetSyncRef.current === syncState) {
+          return;
+        }
+        lastWidgetSyncRef.current = syncState;
+
         const widgetPayload = {
           nextPrayerName: nextPrayer.name,
           nextPrayerTime: timings[nextPrayer.key],
-          countdown: `${formatTimeDiff(timeLeft, lang)} ${lang === 'bn' ? 'বাকি' : 'left'}`,
+          countdown: countdownStr,
           startLabel: startLabelStr,
           endLabel: endLabelStr,
-          progress: Math.min(100, Math.max(0, Math.round(progressPercent))),
+          progress: currentProgress,
           colorTheme: colorTheme,
           widgetStyle: widgetStyle,
           timings: timings
@@ -996,9 +1040,9 @@ function App() {
     return `${formatNumber(activeTime.getDate(), lang)} ${getMonthName(activeTime.getMonth(), lang)} ${formatNumber(activeTime.getFullYear(), lang)}`;
   };
 
-const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
+const tzTime = tzFormatter ? (() => {
        try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+         return new Date(tzFormatter.format(currentTime));
        } catch {
          return currentTime;
        }
