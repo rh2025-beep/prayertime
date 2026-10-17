@@ -1,0 +1,3 @@
+## YYYY-MM-DD - Expensive Formatting in High-Frequency Interval
+**Learning:** Instantiating `Intl.DateTimeFormat` inside a high-frequency (1-second) interval loop blocks the main thread, leading to performance degradation in React functional components, especially when calculating the timezone-adjusted time repeatedly. Also, Capacitor plugin and `localStorage` writes synchronously inside a 1-second interval cause jank.
+**Action:** Memoize `Intl.DateTimeFormat` instances with `useMemo` based on `metaInfo` timezone string. Add dirty-checking with `useRef` to `localStorage.setItem` and Capacitor native calls (`Capacitor.Plugins.PrayerWidget.updateWidget`) to only execute when visually impactful data changes instead of every second.
