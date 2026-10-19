@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Settings, Calendar, Clock, MapPin, Sun, Moon, Sunrise, Sunset, CloudSun, Locate, Search, Compass, ChevronDown, ArrowLeft, Info, Maximize, AlertTriangle, RefreshCw, Compass as CompassIcon, Download, Bell, BellOff } from 'lucide-react';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
@@ -650,12 +650,30 @@ function App() {
     return () => clearInterval(timer);
   }, []);
 
+  const tzFormatter = useMemo(() => {
+    if (!metaInfo || !metaInfo.timezone) return null;
+    try {
+      return new Intl.DateTimeFormat("en-US", {
+        timeZone: metaInfo.timezone,
+        hourCycle: 'h23',
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric'
+      });
+    } catch {
+      return null;
+    }
+  }, [metaInfo?.timezone]);
+
   useEffect(() => {
     if (!timings) return;
     
-    const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
+    const tzTime = (metaInfo && metaInfo.timezone && tzFormatter) ? (() => {
        try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+         return new Date(tzFormatter.format(currentTime));
        } catch {
          return currentTime;
        }
@@ -802,6 +820,8 @@ function App() {
 
   }, [currentTime, timings, prayersList, metaInfo, lang]);
 
+  const lastWidgetSyncRef = useRef("");
+
   // Sync Android Home Screen Widget payload & notify native widget manager immediately
   useEffect(() => {
     if (nextPrayer && timings && prevMilestone) {
@@ -819,6 +839,10 @@ function App() {
           widgetStyle: widgetStyle,
           timings: timings
         };
+
+        const syncKey = JSON.stringify({ widgetPayload, colorTheme, widgetStyle });
+        if (lastWidgetSyncRef.current === syncKey) return;
+        lastWidgetSyncRef.current = syncKey;
 
         if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('PrayerWidget')) {
           Capacitor.Plugins.PrayerWidget.updateWidget({
@@ -996,9 +1020,9 @@ function App() {
     return `${formatNumber(activeTime.getDate(), lang)} ${getMonthName(activeTime.getMonth(), lang)} ${formatNumber(activeTime.getFullYear(), lang)}`;
   };
 
-const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
+  const tzTime = (metaInfo && metaInfo.timezone && tzFormatter) ? (() => {
        try {
-         return new Date(currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone }));
+         return new Date(tzFormatter.format(currentTime));
        } catch {
          return currentTime;
        }
