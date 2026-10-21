@@ -1,0 +1,3 @@
+## YYYY-MM-DD - [Optimize Widget State Sync]
+**Learning:** The native widget update and local storage sync for the Android home screen widget was running on every render pass whenever its dependencies changed, even if the resulting payload was identical. This causes unnecessary overhead, especially since the effect depends on `timeLeft` and `progressPercent` which update rapidly (every second).
+**Action:** Implemented dirty-checking via `useRef` to stringify and cache the generated payload, short-circuiting the native plugin call and local storage update if the payload hasn't structurally changed. This prevents expensive native bridge crossing and I/O operations for identical state updates.
