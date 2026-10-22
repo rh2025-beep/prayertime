@@ -1,0 +1,3 @@
+## YYYY-MM-DD - Avoid useState for pointer tracking in rAF loops
+**Learning:** Using `useState` to track high-frequency events (like pointer coordinates) inside components that also utilize a `requestAnimationFrame` loop causes extreme rendering overhead. Each pointer event triggers a React state update, causing a component re-render, which in turn destroys and recreates the `useEffect` running the animation loop.
+**Action:** Use `useRef` to store mutable values that are accessed inside a `requestAnimationFrame` loop (like pointer coordinates) but do not need to trigger a UI re-render, avoiding unnecessary layout thrashing.
