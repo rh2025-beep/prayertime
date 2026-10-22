@@ -3,7 +3,7 @@ import { formatTimeDiff } from '../utils';
 
 const Screensaver = ({ onClose, colorTheme, currentHour, currentMinStr, nextPrayer, timeLeft, lang, renderFormattedTime, timings, activePrayer }) => {
   const canvasRef = useRef(null);
-  const [pointer, setPointer] = useState({ x: -1000, y: -1000, isDown: false });
+  const pointerRef = useRef({ x: -1000, y: -1000, isDown: false });
 
   // Screen WakeLock to keep Android display awake while Screensaver is active
   useEffect(() => {
@@ -68,9 +68,9 @@ const Screensaver = ({ onClose, colorTheme, currentHour, currentMinStr, nextPray
           let dy = Math.sin(i * wave.wavelength + time * wave.speed) * wave.amplitude;
           
           // touch reaction
-          const dx = i - pointer.x;
+          const dx = i - pointerRef.current.x;
           // Only react if the touch is within the bottom half or near the waves
-          const dy_pointer = (canvas.height * wave.yOffset) - pointer.y;
+          const dy_pointer = (canvas.height * wave.yOffset) - pointerRef.current.y;
           const dist = Math.sqrt(dx * dx + dy_pointer * dy_pointer);
           
           if (dist < 300) {
@@ -97,16 +97,16 @@ const Screensaver = ({ onClose, colorTheme, currentHour, currentMinStr, nextPray
       window.removeEventListener('resize', resize);
       window.cancelAnimationFrame(animationFrameId);
     };
-  }, [pointer, colorTheme]);
+  }, [colorTheme]);
 
   return (
     <div 
       className="screensaver-overlay"
       onClick={onClose}
-      onPointerMove={(e) => setPointer({ x: e.clientX, y: e.clientY, isDown: pointer.isDown })}
-      onPointerDown={(e) => setPointer({ x: e.clientX, y: e.clientY, isDown: true })}
-      onPointerUp={() => setPointer({ ...pointer, isDown: false })}
-      onPointerLeave={() => setPointer({ x: -1000, y: -1000, isDown: false })}
+      onPointerMove={(e) => { pointerRef.current = { x: e.clientX, y: e.clientY, isDown: pointerRef.current.isDown }; }}
+      onPointerDown={(e) => { pointerRef.current = { x: e.clientX, y: e.clientY, isDown: true }; }}
+      onPointerUp={() => { pointerRef.current.isDown = false; }}
+      onPointerLeave={() => { pointerRef.current = { x: -1000, y: -1000, isDown: false }; }}
     >
       <canvas ref={canvasRef} className="screensaver-canvas" />
 
