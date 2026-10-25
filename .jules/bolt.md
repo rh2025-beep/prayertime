@@ -1,0 +1,3 @@
+## YYYY-MM-DD - [Optimizing Capacitor Widget Plugin Calls]
+**Learning:** Calling Capacitor native plugins frequently on every re-render or interval tick, even when the payload data hasn't changed, can cause severe performance degradation and battery drain on mobile devices. React's `useEffect` dependencies often trigger more frequently than the actual domain data changes (e.g. `timeLeft` or `progressPercent` updates).
+**Action:** Always implement a dirty-check mechanism (like deep comparison or JSON stringification of relevant state) inside high-frequency `useEffect` hooks that interact with native platform APIs via Capacitor, ensuring the plugin is only invoked when the actual outbound payload changes.
