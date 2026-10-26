@@ -1,0 +1,3 @@
+## YYYY-MM-DD - High-Frequency Event Tracking
+**Learning:** Using `useState` to track high-frequency, continuous events (like pointer coordinates `onPointerMove`) causes severe performance degradation due to continuous component re-renders and effect teardown/setups, especially when only consumed inside an active `requestAnimationFrame` loop.
+**Action:** In React components, always use `useRef` instead of `useState` to track high-frequency events if the values are only consumed inside an active `requestAnimationFrame` loop. This avoids severe performance degradation caused by continuous component re-renders.
