@@ -1678,7 +1678,7 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
               <div className="sheet-drag-handle" />
               <div className="modal-header" style={{marginBottom: '1rem'}}>
                 <span className="modal-title">{str.searchLoc}</span>
-                <button className="close-btn" onClick={closeSearch}>&times;</button>
+                <button className="close-btn" onClick={closeSearch} aria-label="Close">&times;</button>
               </div>
               
               <div style={{display:'flex', gap:'0.5rem', marginBottom:'1rem'}}>
@@ -1693,6 +1693,7 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                 <button 
                   onClick={() => handleSearch(searchQuery)}
                   style={{padding:'0.75rem 1rem', borderRadius:'10px', background:'var(--active-gradient)', color:'white', border:'none', cursor:'pointer'}}
+                  aria-label="Search"
                 >
                   <Search size={20} />
                 </button>
@@ -1703,14 +1704,15 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
               ) : (
                 <div style={{display:'flex', flexDirection:'column', gap:'0.5rem'}}>
                   {searchResults.map((item, idx) => (
-                    <div 
+                    <button
+                      type="button"
                       key={idx} 
                       onClick={() => selectLocation(item)}
-                      style={{padding:'1rem', borderRadius:'10px', background:'var(--card-bg)', cursor:'pointer', border:'1px solid var(--border-color)'}}
+                      style={{padding:'1rem', borderRadius:'10px', background:'var(--card-bg)', cursor:'pointer', border:'1px solid var(--border-color)', textAlign: 'left', width: '100%', color: 'inherit'}}
                     >
                       <div style={{fontWeight:'700', fontSize:'1rem'}}>{item.display_name.split(',')[0]}</div>
                       <div style={{fontSize:'0.8rem', color:'var(--text-muted)'}}>{item.display_name}</div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}
