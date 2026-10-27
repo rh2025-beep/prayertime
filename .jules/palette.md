@@ -1,0 +1,3 @@
+## YYYY-MM-DD - Accessible Interactive Elements in Location Search
+**Learning:** Found interactive `div` elements used for search results which lack proper keyboard navigation (tab focus, enter key to select) and semantic meaning for screen readers. Also found missing `aria-label`s on icon-only buttons like the search submit and close modal buttons.
+**Action:** When designing a list of clickable search results, always use semantic `<button type="button">` instead of `<div>` with `onClick` to get keyboard support automatically. Remember to maintain inherited styles (`textAlign: 'left'`, `width: '100%'`, `color: 'inherit'`) when converting from div to button. Always add `aria-label` to icon-only close/search buttons using localized strings if available.
