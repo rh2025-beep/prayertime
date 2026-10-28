@@ -1,0 +1,3 @@
+## YYYY-MM-DD - Interactive Div to Semantic Button Conversion
+**Learning:** In React applications, using interactive `div` elements for list items or search results causes accessibility issues as they lack tab focus and native keyboard interaction. When converting them to semantic `<button>` elements, it's crucial to explicitly set `type="button"` to prevent unintended form submissions, and inherit styles like `textAlign: 'left'`, `width: '100%'`, and `color: 'inherit'` to preserve the original visual layout while gaining native accessibility benefits.
+**Action:** Always use semantic `<button type="button">` with inherited styles for interactive list items instead of `div`s with `onClick` handlers.
