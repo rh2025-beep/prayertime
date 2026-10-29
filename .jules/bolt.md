@@ -1,0 +1,3 @@
+## 2024-10-29 - Date Formatting in React Render/Effect loops
+**Learning:** Using `toLocaleString` inside a `useEffect` that runs every second (like updating a clock) causes significant performance overhead and blocks the main thread momentarily, which can cause UI stutter. The overhead is ~30x slower than alternative approaches for large counts.
+**Action:** When calculating a timezone-adjusted date in a high-frequency interval or effect, prefer caching a configured `Intl.DateTimeFormat` or only calculating it when necessary, rather than calling `toLocaleString` with timezone options repeatedly on every tick.
