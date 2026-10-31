@@ -1,0 +1,3 @@
+## YYYY-MM-DD - [Avoid Date.toLocaleString with timeZone in frequent loops]
+**Learning:** Calling `Date.prototype.toLocaleString()` with a `timeZone` option recreates the underlying `Intl.DateTimeFormat` instance on every call, causing a severe performance bottleneck when executed during React renders or frequent `setInterval` loops.
+**Action:** Always memoize an `Intl.DateTimeFormat` instance (e.g., using `useMemo`) for timezone conversions and pass `formatter.format(date)` instead. Use `hourCycle: 'h23'` instead of `hour12: false` when parsing back into a Date object to prevent Invalid Date errors at midnight.
