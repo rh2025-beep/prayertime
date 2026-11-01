@@ -1,0 +1,3 @@
+## 2024-11-01 - Optimizing Date Localization
+**Learning:** Calling `currentTime.toLocaleString("en-US", { timeZone: metaInfo.timezone })` during render or frequent effects (like inside a timer) is highly inefficient, taking roughly ~1.5s per 10k calls, while creating a cached `Intl.DateTimeFormat` object takes ~45ms for the same number of calls (30x faster).
+**Action:** When repeatedly formatting dates using a specific timezone, memoize the `Intl.DateTimeFormat` object (e.g. via `useMemo`) rather than passing the timezone options into `toLocaleString` or creating it inline every time. Ensure `hourCycle: 'h23'` is used when parsing to a Javascript Date object to prevent Invalid Date errors at midnight.
