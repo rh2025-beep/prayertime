@@ -1,0 +1,3 @@
+## YYYY-MM-DD - Add visual feedback for GPS location detection
+**Learning:** Native device APIs like geolocation can be slow or unresponsive. Users need visual feedback when these APIs are triggered to understand the app is working.
+**Action:** Always wrap async device API calls in state variables and add visual feedback (like `.spin-icon`) and disabled states to their trigger buttons to prevent the app from appearing unresponsive.
