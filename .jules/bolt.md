@@ -1,0 +1,3 @@
+## YYYY-MM-DD - Cache Intl.DateTimeFormat
+**Learning:** Calling `Date.prototype.toLocaleString` with formatting options inside high-frequency renders or `useEffect` loops is very slow. Creating a new `Intl.DateTimeFormat` instance repeatedly has significant overhead. Also, when caching `Intl.DateTimeFormat` for programmatic date parsing (`new Date(formatter.format(date))`), `hourCycle: 'h23'` must be used instead of `hour12: false` to avoid parsing invalid midnight dates (24:xx:xx).
+**Action:** Use a memoized `Intl.DateTimeFormat` instance via `useMemo` for repeated date formatting, and always use `hourCycle: 'h23'` with the `en-US` locale when the output is fed back into `new Date()`.
