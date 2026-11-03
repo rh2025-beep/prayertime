@@ -1,0 +1,3 @@
+## YYYY-MM-DD - Semantic Button Conversions
+**Learning:** In the location search modal, search results were implemented as clickable `div`s, which blocked keyboard navigation (tabbing) and screen reader activation. Converting interactive list items to semantic `<button type="button">` elements natively solves accessibility issues while maintaining visual fidelity by inheriting layout properties.
+**Action:** Always prefer semantic `<button type="button">` elements with inherited styles (`textAlign: 'left'`, `width: '100%'`, `color: 'inherit'`) over `div`s with `onClick` handlers to ensure keyboard accessibility out-of-the-box.
