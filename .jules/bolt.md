@@ -1,0 +1,3 @@
+## YYYY-MM-DD - [Optimizing Date Formatting in React]
+**Learning:** Using `Date.prototype.toLocaleString()` with timezone options inside a component that re-renders frequently (e.g., in a `setInterval` or `requestAnimationFrame` loop) is computationally expensive. When combined with the `en-US` locale for programmatic date parsing, setting `hour12: false` causes midnight to format as `24:xx:xx`, leading to an 'Invalid Date' error.
+**Action:** Memoize `Intl.DateTimeFormat` using `useMemo` for repeated date formatting. Use `hourCycle: 'h23'` instead of `hour12: false` with the `en-US` locale to ensure the formatted time uses `00:xx:xx` for midnight, remaining valid for the `Date` constructor.
