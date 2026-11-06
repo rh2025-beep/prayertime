@@ -1,0 +1,3 @@
+## 2026-11-06 - Optimize Date.toLocaleString in Frequent Renders
+**Learning:** In React applications, avoid repeatedly invoking `Date.prototype.toLocaleString()` with `timeZone` options during renders or frequent interval loops, as it is computationally expensive. Use a memoized `Intl.DateTimeFormat` instance (`useMemo`) instead to format dates, which can yield up to 15x performance improvements.
+**Action:** When caching `Intl.DateTimeFormat` for programmatic date parsing (e.g., passing `formatter.format(date)` into `new Date()`) using the `en-US` locale, set `hourCycle: 'h23'` rather than `hour12: false`. Using `hour12: false` formats midnight as `24:xx:xx`, which results in an 'Invalid Date' error when parsed by the JavaScript Date constructor.
