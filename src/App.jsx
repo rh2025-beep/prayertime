@@ -1693,6 +1693,7 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
                 <button 
                   onClick={() => handleSearch(searchQuery)}
                   style={{padding:'0.75rem 1rem', borderRadius:'10px', background:'var(--active-gradient)', color:'white', border:'none', cursor:'pointer'}}
+                  aria-label={str.searchBtn || 'Search'}
                 >
                   <Search size={20} />
                 </button>
@@ -1703,14 +1704,14 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
               ) : (
                 <div style={{display:'flex', flexDirection:'column', gap:'0.5rem'}}>
                   {searchResults.map((item, idx) => (
-                    <div 
+                    <button type="button"
                       key={idx} 
                       onClick={() => selectLocation(item)}
-                      style={{padding:'1rem', borderRadius:'10px', background:'var(--card-bg)', cursor:'pointer', border:'1px solid var(--border-color)'}}
+                      style={{padding:'1rem', borderRadius:'10px', background:'var(--card-bg)', cursor:'pointer', border:'1px solid var(--border-color)', display: 'block', width: '100%', textAlign: 'left', color: 'inherit'}}
                     >
                       <div style={{fontWeight:'700', fontSize:'1rem'}}>{item.display_name.split(',')[0]}</div>
                       <div style={{fontSize:'0.8rem', color:'var(--text-muted)'}}>{item.display_name}</div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}
