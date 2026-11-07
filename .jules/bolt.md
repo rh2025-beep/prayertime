@@ -1,0 +1,3 @@
+## YYYY-MM-DD - [Date Object Instantiation Parsing]
+**Learning:** In React applications, repeatedly invoking `Date.prototype.toLocaleString()` with `timeZone` options during renders or frequent interval loops is computationally expensive. Using a memoized `Intl.DateTimeFormat` instance (`useMemo`) instead to format dates can yield significant performance improvements. When doing this, caching `Intl.DateTimeFormat` with `hourCycle: 'h23'` rather than `hour12: false` prevents an 'Invalid Date' error when passing the resulting string back into `new Date()`.
+**Action:** Replace frequent `toLocaleString` calls inside render or intervals with a memoized `Intl.DateTimeFormat` object configured with `hourCycle: 'h23'` if string parsing to `new Date()` is needed.
