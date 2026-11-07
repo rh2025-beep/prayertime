@@ -1,0 +1,3 @@
+## 2024-11-07 - Accessibility of interactive divs
+**Learning:** In this application, list items in the search modal (for searching a location) are implemented as `div` tags with `onClick` handlers. These are interactive elements but lack tab focus ability or keyboard interactivity out-of-the-box. We should update them to use native `<button>` tags with the appropriate attributes to ensure they're focusable and operable by keyboard users. Also the search icon button is missing an `aria-label`.
+**Action:** Convert `onClick` `div`s that act as interactive items (e.g. search result items) to `<button type="button">` and apply styling to maintain visual layout. Add `aria-label`s to any icon-only buttons (like the Search button in the location search bar).
