@@ -1678,7 +1678,7 @@ const tzTime = (metaInfo && metaInfo.timezone) ? (() => {
               <div className="sheet-drag-handle" />
               <div className="modal-header" style={{marginBottom: '1rem'}}>
                 <span className="modal-title">{str.searchLoc}</span>
-                <button className="close-btn" onClick={closeSearch}>&times;</button>
+                <button className="close-btn" onClick={closeSearch} aria-label={str.cancel || 'Close'}>&times;</button>
               </div>
               
               <div style={{display:'flex', gap:'0.5rem', marginBottom:'1rem'}}>
