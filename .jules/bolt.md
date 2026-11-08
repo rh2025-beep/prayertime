@@ -1,0 +1,3 @@
+## YYYY-MM-DD - Cached Intl.DateTimeFormat for performance
+**Learning:** In React applications, avoid repeatedly invoking `Date.prototype.toLocaleString()` with `timeZone` options during renders or frequent interval loops, as it is computationally expensive. Use a memoized `Intl.DateTimeFormat` instance instead to format dates, which can yield up to 15x performance improvements. When caching `Intl.DateTimeFormat` for programmatic date parsing using the `en-US` locale, set `hourCycle: 'h23'` rather than `hour12: false` to avoid 'Invalid Date' errors at midnight.
+**Action:** Use `useMemo` to cache `Intl.DateTimeFormat` and use its `format()` method instead of `toLocaleString()`.
